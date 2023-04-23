@@ -10,13 +10,21 @@ class ICDTokenizer:
 
     def extract_icd(self, input):
         result = []
+        can_skip = False
         while input != "":
             prefix = self.trie.longest_prefix(input).key
             if prefix is None:
-                input = input.removeprefix(input[0])
+                input = input[1:]
+                if can_skip:
+                    if self.trie.has_subtrie(result[-1]):
+                        prefix = self.trie.longest_prefix(result[-1]+input).key
+                        result[-1] = prefix
+                        input = (result[-1]+input).removeprefix(prefix)
+                can_skip = False
             else:
                 input = input.removeprefix(prefix)
                 result.append(prefix)
+                can_skip = True
         return result
 
 

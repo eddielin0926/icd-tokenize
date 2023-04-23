@@ -1,8 +1,8 @@
 import os
 import time
-import pygtrie
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from tokenizer import ICDTokenizer
 
 # Create tmp directory
@@ -18,6 +18,8 @@ icd_series = icd_df['diagnosis']
 tokenizer = ICDTokenizer(icd_series)
 
 
+total_correct = 0
+total_count = 0
 for file in os.listdir('./data'):
     # Load Dataset
     df = pd.read_excel(f'./data/{file}', header=1)
@@ -33,7 +35,7 @@ for file in os.listdir('./data'):
     error_list = []
     ans_list = []
     correct_count = 0
-    for idx, row in df_input.iterrows():
+    for idx, row in tqdm(df_input.iterrows(), total=len(df_input.index), leave=False):
         row_result = []
         for catalog in ['甲', '乙', '丙', '丁', '其他']:
             catalog_result = []
@@ -61,7 +63,10 @@ for file in os.listdir('./data'):
                     ans_list.append(tar)
 
     rate = (correct_count * 100 / len(df_target.index))
-    print(f'{file}\t {round(rate, 2)}%')
+    print(f'{file}\t {correct_count} / {len(df_target.index)}\t {round(rate, 1)}%')
+
+    total_correct += correct_count
+    total_count += len(df_target.index)
 
     # Save error records
     df_error = pd.DataFrame(error_list)
@@ -70,3 +75,6 @@ for file in os.listdir('./data'):
     timestamp = int(time.time())
     df_error.to_csv(f'tmp/{timestamp}.err.csv')
     df_ans.to_csv(f'tmp/{timestamp}.ans.csv')
+
+rate = (total_correct * 100 / total_count)
+print(f'total accuracy:\t {round(rate, 2)}%')
