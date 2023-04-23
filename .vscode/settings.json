@@ -5,6 +5,10 @@
         "jieba",
         "openpyxl",
         "pygtrie",
+        "subtrie",
         "tqdm"
-    ]
+    ],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportShadowedImports": "none"
+    },
 }
