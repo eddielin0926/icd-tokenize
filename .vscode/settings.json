@@ -5,6 +5,7 @@
         "jieba",
         "openpyxl",
         "pygtrie",
+        "rslt",
         "subtrie",
         "tqdm"
     ],

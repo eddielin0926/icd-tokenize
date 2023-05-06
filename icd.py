@@ -34,10 +34,12 @@ for file in os.listdir('./data'):
                 data = row[f'{catalog}{i}']
                 # if icd_trie.has_key(data) and not result_trie.has_key(data):
                 if not result_trie.has_key(data):
-                    if data != '感染':
+                    if data != '感染' and '"' not in data:
                         result_list.append(data)
                         result_trie[data] = True
 
+
 df_result = pd.DataFrame(result_list, columns=['diagnosis'])
+df_result['diagnosis'] = df_result['diagnosis'].str.normalize('NFKC')
 df_result = df_result.sort_values(['diagnosis'])
 df_result.to_csv(f'./icd/icd.csv', index=False)

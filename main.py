@@ -49,12 +49,16 @@ for file in os.listdir('./data'):
     error_list = []
     answer_list = []
     correct_count = 0
+    current_count = 0
+    is_dirty_data = False
     for idx, row in tqdm(df_input.iterrows(), total=len(df_input.index), leave=True):
         row_result = []
         for catalog in ['甲', '乙', '丙', '丁', '其他']:
             catalog_result = []
             for i in ['', '2', '3', '4']:
                 data = row[f'{catalog}{i}']
+                if '?' in data:
+                    is_dirty_data = True
                 col_result = tokenizer.extract_icd(data)
                 catalog_result.extend(col_result)
 
@@ -62,8 +66,13 @@ for file in os.listdir('./data'):
             while len(catalog_result) < 4:
                 catalog_result.append('')
             row_result.extend(catalog_result[:4])  # truncate exceed result
+        
+        if is_dirty_data:
+            is_dirty_data = False
+            continue # skip dirty data
 
         row_target = df_target.iloc[idx].to_list()
+        current_count += 1
         if row_result == row_target:  # result is correct
             correct_count += 1
         else:
@@ -78,11 +87,11 @@ for file in os.listdir('./data'):
                     error_list.append(res)
                     answer_list.append(tar)
 
-    rate = (correct_count * 100 / len(df_target.index))
-    print(f'{file}\t {correct_count} / {len(df_target.index)}\t {round(rate, 1)}%')
+    rate = (correct_count * 100 / current_count)
+    print(f'{file}\t {correct_count} / {current_count}\t {round(rate, 1)}%')
 
     total_correct += correct_count
-    total_count += len(df_target.index)
+    total_count += current_count
 
     # Save error records
     df_origin = pd.DataFrame(input_list)
