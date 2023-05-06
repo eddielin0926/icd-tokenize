@@ -41,9 +41,6 @@ if __name__ == '__main__':
 
     tokenizer = ICDTokenizer(icd_series)
 
-    # text = '慢性疾病及合併症急性發作'
-    text = '糖尿病 合併 多重器官 併發症'
-    # text = '慢性阻塞性肺病併感染'
-    text = '糖尿病及併發症'
+    text = '壼腹癌併手術後復發'
 
     print(tokenizer.extract_icd(text))
