@@ -1,6 +1,6 @@
 # ICD Tokenizer
 
-Base a description of cause of death, extract the key word.
+Base on a description of cause of death, extract the key word.
 
 ## Prerequisite
 

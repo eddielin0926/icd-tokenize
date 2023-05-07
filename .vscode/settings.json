@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
+        "autopep",
         "iloc",
         "iterrows",
         "jieba",
+        "numpy",
         "openpyxl",
         "pygtrie",
         "rslt",

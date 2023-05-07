@@ -1,12 +1,17 @@
+import numpy as np
+
+
 class ICDValidator:
-    def __init__(self, path = 'icd/synonyms.txt') -> None:
+    def __init__(self, path='icd/synonyms.txt') -> None:
         with open(path, 'r', encoding="utf-8") as f:
             self.synonyms_list = []
             for line in f.readlines():
                 self.synonyms_list.append(line.split(','))
 
     def icd_validate(self, predict: list, target: list) -> bool:
-        for pred, trgt in zip(predict[::4], target[::4]):
+        predict = [predict[i: i+4] for i in range(0, len(predict), 4)]
+        target = [target[i: i+4] for i in range(0, len(target), 4)]
+        for pred, trgt in zip(predict, target):
             for str1 in pred:
                 if str1 == '':
                     continue
@@ -20,7 +25,7 @@ class ICDValidator:
                 if not exist:
                     return False
         return True
-        
+
     def _icd_compare(self, str1: str, str2: str) -> bool:
         str1, str2 = str1.upper(), str2.upper()
         if str1 == str2:
@@ -29,11 +34,14 @@ class ICDValidator:
             if str1 in synonym and str2 in synonym:
                 return True
         return False
-    
+
+
 if __name__ == '__main__':
     validator = ICDValidator()
 
-    predict = ['covid-19', '', '', '', 'covid-19', '', '', '', 'covid-19', '', '', '', 'covid-19', '', '', '', 'covid-19', '', '', '']
-    target = ['COVID-19', '', '', '', 'COVID-19', '', '', '', 'COVID-19', '', '', '', 'COVID-19', '', '', '', 'COVID-19', '', '', '']
+    predict = ['Covid-19', '', '', '', '新冠肺炎', '', '', '', 'COVID-19',
+               '', '', '', 'COVID 19', '', '', '', '新冠肺炎病毒', '', '', '']
+    target = ['COVID-19', '', '', '', 'COVID-19', '', '', '', 'COVID-19',
+              '', '', '', 'COVID-19', '', '', '', 'COVID-19', '', '', '']
 
     print(validator.icd_validate(predict, target))

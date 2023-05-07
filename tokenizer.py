@@ -14,19 +14,28 @@ class ICDTokenizer:
         data = re.sub(r'合併(?!症)', '', data)
         data = re.sub(r'併發(?!症)', '', data)
         data = re.sub(r'及', '', data)
+        data = re.sub(r'並', '', data)
+        data = re.sub(r'_', '', data)
         data = re.sub(r'\s', '', data)
         data = data.replace('COVID19', 'COVID-19')
         if __name__ == '__main__':
-            print(data)
-        return data
-    
-    def _post_process(self, data: str) -> str:
-        if data.upper() == 'COVID-19':
-            return 'COVID 19'
-        # if '癌術後' in data:
-        #     return data.replace('癌術後', '癌')
-        return data
-        
+            print(f'pre-process: {data}')
+        return data   
+
+    def _post_process(self, data: list) -> list:
+        # remove subset words
+        result = []
+        for i in range(len(data)):
+            is_subset = False
+            for j in range(len(data)):
+                if i != j:
+                    if data[i] in data[j]:
+                        is_subset = True
+                        break
+            if not is_subset:
+                result.append(data[i])
+
+        return result
 
     def extract_icd(self, input: str):
         input = self._pre_process(input)
@@ -35,12 +44,23 @@ class ICDTokenizer:
         while input != "":
             prefix = self.trie.longest_prefix(input).key
             if prefix is None:
+                # if self.trie.has_subtrie(input[0]):
+                #     count = 0
+                #     while count < (len(input) - 1):
+                #         if self.trie.has_key(input[0] + input[count:]):
+                #             prefix = input[0] + input[count:]
+                #             result.append(prefix)
+                #             break
+                #         count += 1
                 input = input[1:]
             else:
                 input = input.removeprefix(prefix)
-                prefix = self._post_process(prefix)
                 result.append(prefix)
+
         result = list(dict.fromkeys(result))
+
+        # result = self._post_process(result)
+
         return result
 
 
@@ -50,6 +70,10 @@ if __name__ == '__main__':
 
     tokenizer = ICDTokenizer(icd_series)
 
-    text = 'COVID-19(Covid-19)'
+    text = '肺左上葉及右中葉鱗狀細胞癌'
 
-    print(tokenizer.extract_icd(text))
+    print(f'input text: {text}')
+
+    result = tokenizer.extract_icd(text)
+
+    print(f'result list: {result}')

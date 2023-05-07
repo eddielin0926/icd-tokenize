@@ -88,7 +88,7 @@ for file in os.listdir('./data'):
         row_target = df_target.iloc[idx].to_list()
         current_count += 1
 
-        if row_result == row_target:  # result is correct
+        if validator.icd_validate(row_result, row_target):  # result is correct
             correct_count += 1
         else:
             # From 1x20 reshape to 5x4
@@ -123,6 +123,7 @@ for file in os.listdir('./data'):
     pd.DataFrame(error_list).to_csv(f'{tmpdir}/error.csv')
     pd.DataFrame(answer_list).to_csv(f'{tmpdir}/answer.csv')
 
+
 # Dump process information
 total_accuracy = (total_correct * 100 / total_count)
 df_record = pd.DataFrame(records, index=None)
@@ -147,9 +148,9 @@ console.print(table)
 
 # Finish process timing
 end_time = time.time()
+elapsed_time = end_time - start_time
 
 # Print result
 console.print(f'total accuracy:\t [green bold]{round(total_accuracy, 2)}%[/]')
 console.print(f'total data:\t [green bold]{total_count}[/]')
-console.print(
-    f'elapsed time:\t [green bold]{round((end_time - start_time), 3)}s[/]')
+console.print(f'elapsed time:\t [green bold]{round(elapsed_time, 3)}s[/]')
