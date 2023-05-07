@@ -4,10 +4,17 @@ import re
 
 
 class ICDTokenizer:
-    def __init__(self, data) -> None:
+    def __init__(self, data, path='icd/synonyms.txt') -> None:
         self.trie = pygtrie.CharTrie()
         for element in data:
             self.trie[element] = True
+        
+        with open(path, 'r', encoding="utf-8") as f:
+            self.synonyms_list = []
+            for line in f.readlines():
+                line = line.replace('\n', '')
+                self.synonyms_list.append(line.split(','))
+
 
     def _pre_process(self, data: str) -> str:
         data = re.sub(r'(?<!合)併(?!發)', '', data)
@@ -23,19 +30,27 @@ class ICDTokenizer:
         return data   
 
     def _post_process(self, data: list) -> list:
-        # remove subset words
-        result = []
+        # switch to synonym
         for i in range(len(data)):
-            is_subset = False
-            for j in range(len(data)):
-                if i != j:
-                    if data[i] in data[j]:
-                        is_subset = True
-                        break
-            if not is_subset:
-                result.append(data[i])
+            for synonym in self.synonyms_list:
+                if data[i] in synonym:
+                    data[i] = synonym[0]
 
-        return result
+        # # remove subset words
+        # result = []
+        # for i in range(len(data)):
+        #     is_subset = False
+        #     for j in range(len(data)):
+        #         if i != j:
+        #             if data[i] in data[j]:
+        #                 is_subset = True
+        #                 break
+        #     if not is_subset:
+        #         result.append(data[i])
+
+        data = list(dict.fromkeys(data))
+
+        return data
 
     def extract_icd(self, input: str):
         input = self._pre_process(input)
@@ -57,9 +72,7 @@ class ICDTokenizer:
                 input = input.removeprefix(prefix)
                 result.append(prefix)
 
-        result = list(dict.fromkeys(result))
-
-        # result = self._post_process(result)
+        result = self._post_process(result)
 
         return result
 

@@ -6,6 +6,7 @@ class ICDValidator:
         with open(path, 'r', encoding="utf-8") as f:
             self.synonyms_list = []
             for line in f.readlines():
+                line = line.replace('\n', '')
                 self.synonyms_list.append(line.split(','))
 
     def icd_validate(self, predict: list, target: list) -> bool:
@@ -39,9 +40,9 @@ class ICDValidator:
 if __name__ == '__main__':
     validator = ICDValidator()
 
-    predict = ['Covid-19', '', '', '', '新冠肺炎', '', '', '', 'COVID-19',
+    predict = ['新冠病毒', '', '', '', '新冠肺炎', '', '', '', 'COVID-19',
                '', '', '', 'COVID 19', '', '', '', '新冠肺炎病毒', '', '', '']
-    target = ['COVID-19', '', '', '', 'COVID-19', '', '', '', 'COVID-19',
+    target = ['新冠病毒感染', '', '', '', 'COVID-19', '', '', '', 'COVID-19',
               '', '', '', 'COVID-19', '', '', '', 'COVID-19', '', '', '']
 
     print(validator.icd_validate(predict, target))
