@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.table import Table
 from datetime import datetime
 from tokenizer import ICDTokenizer
+from validator import ICDValidator
 from rich.progress import track
 
 
@@ -28,6 +29,9 @@ icd_series = icd_df['diagnosis']
 
 # Load ICD tokenizer
 tokenizer = ICDTokenizer(icd_series)
+
+# Load ICD validator
+validator = ICDValidator()
 
 records = []
 total_correct = 0
