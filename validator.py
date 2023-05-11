@@ -2,23 +2,23 @@ import numpy as np
 
 
 class ICDValidator:
-    def __init__(self, path='icd/synonyms.txt') -> None:
-        with open(path, 'r', encoding="utf-8") as f:
+    def __init__(self, path="icd/synonyms.txt") -> None:
+        with open(path, "r", encoding="utf-8") as f:
             self.synonyms_list = []
             for line in f.readlines():
-                line = line.replace('\n', '')
-                self.synonyms_list.append(line.split(','))
+                line = line.replace("\n", "")
+                self.synonyms_list.append(line.split(","))
 
     def icd_validate(self, predict: list, target: list) -> bool:
-        predict = [predict[i: i+4] for i in range(0, len(predict), 4)]
-        target = [target[i: i+4] for i in range(0, len(target), 4)]
+        predict = [predict[i : i + 4] for i in range(0, len(predict), 4)]
+        target = [target[i : i + 4] for i in range(0, len(target), 4)]
         for pred, trgt in zip(predict, target):
             for str1 in pred:
-                if str1 == '':
+                if str1 == "":
                     continue
                 exist = False
                 for str2 in trgt:
-                    if str2 == '':
+                    if str2 == "":
                         continue
                     if self._icd_compare(str1, str2):
                         exist = True
@@ -37,12 +37,52 @@ class ICDValidator:
         return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     validator = ICDValidator()
 
-    predict = ['新冠病毒', '', '', '', '新冠肺炎', '', '', '', 'COVID-19',
-               '', '', '', 'COVID 19', '', '', '', '新冠肺炎病毒', '', '', '']
-    target = ['新冠病毒感染', '', '', '', 'COVID-19', '', '', '', 'COVID-19',
-              '', '', '', 'COVID-19', '', '', '', 'COVID-19', '', '', '']
+    predict = [
+        "COVID 19",
+        "呼吸衰竭",
+        "",
+        "",
+        "新冠肺炎",
+        "",
+        "",
+        "",
+        "COVID-19",
+        "",
+        "",
+        "",
+        "COVID 19",
+        "",
+        "",
+        "",
+        "新冠肺炎病毒",
+        "",
+        "",
+        "",
+    ]
+    target = [
+        "嚴重特殊傳染性肺炎",
+        "呼吸衰竭",
+        "",
+        "",
+        "COVID-19",
+        "",
+        "",
+        "",
+        "COVID-19",
+        "",
+        "",
+        "",
+        "COVID-19",
+        "",
+        "",
+        "",
+        "COVID-19",
+        "",
+        "",
+        "",
+    ]
 
     print(validator.icd_validate(predict, target))

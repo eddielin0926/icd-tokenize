@@ -4,30 +4,29 @@ import re
 
 
 class ICDTokenizer:
-    def __init__(self, data, path='icd/synonyms.txt') -> None:
+    def __init__(self, data, path="icd/synonyms.txt") -> None:
         self.trie = pygtrie.CharTrie()
         for element in data:
             self.trie[element] = True
-        
-        with open(path, 'r', encoding="utf-8") as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             self.synonyms_list = []
             for line in f.readlines():
-                line = line.replace('\n', '')
-                self.synonyms_list.append(line.split(','))
-
+                line = line.replace("\n", "")
+                self.synonyms_list.append(line.split(","))
 
     def _pre_process(self, data: str) -> str:
-        data = re.sub(r'(?<!合)併(?!發)', '', data)
-        data = re.sub(r'合併(?!症)', '', data)
-        data = re.sub(r'併發(?!症)', '', data)
-        data = re.sub(r'及', '', data)
-        data = re.sub(r'並', '', data)
-        data = re.sub(r'_', '', data)
-        data = re.sub(r'\s', '', data)
-        data = data.replace('COVID19', 'COVID-19')
-        if __name__ == '__main__':
-            print(f'pre-process: {data}')
-        return data   
+        data = re.sub(r"(?<!合)併(?!發)", "", data)
+        data = re.sub(r"合併(?!症)", "", data)
+        data = re.sub(r"併發(?!症)", "", data)
+        data = re.sub(r"及", "", data)
+        data = re.sub(r"並", "", data)
+        data = re.sub(r"_", "", data)
+        data = re.sub(r"\s", "", data)
+        data = data.replace("COVID19", "COVID-19")
+        if __name__ == "__main__":
+            print(f"pre-process: {data}")
+        return data
 
     def _post_process(self, data: list) -> list:
         # switch to synonym
@@ -77,16 +76,16 @@ class ICDTokenizer:
         return result
 
 
-if __name__ == '__main__':
-    icd_df = pd.read_csv('./icd/icd.csv')
-    icd_series = icd_df['diagnosis']
+if __name__ == "__main__":
+    icd_df = pd.read_csv("./icd/icd.csv")
+    icd_series = icd_df["diagnosis"]
 
     tokenizer = ICDTokenizer(icd_series)
 
-    text = '肺左上葉及右中葉鱗狀細胞癌'
+    text = "頸椎轉移性癌症併四肢癱瘓"
 
-    print(f'input text: {text}')
+    print(f"input text: {text}")
 
     result = tokenizer.extract_icd(text)
 
-    print(f'result list: {result}')
+    print(f"result list: {result}")
