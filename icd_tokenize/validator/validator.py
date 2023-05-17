@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class ICDValidator:
     def __init__(self, path="icd/synonyms.txt") -> None:
         with open(path, "r", encoding="utf-8") as f:
@@ -35,54 +32,3 @@ class ICDValidator:
             if str1 in synonym and str2 in synonym:
                 return True
         return False
-
-
-if __name__ == "__main__":
-    validator = ICDValidator()
-
-    predict = [
-        "COVID 19",
-        "呼吸衰竭",
-        "",
-        "",
-        "新冠肺炎",
-        "",
-        "",
-        "",
-        "COVID-19",
-        "",
-        "",
-        "",
-        "COVID 19",
-        "",
-        "",
-        "",
-        "新冠肺炎病毒",
-        "",
-        "",
-        "",
-    ]
-    target = [
-        "嚴重特殊傳染性肺炎",
-        "呼吸衰竭",
-        "",
-        "",
-        "COVID-19",
-        "",
-        "",
-        "",
-        "COVID-19",
-        "",
-        "",
-        "",
-        "COVID-19",
-        "",
-        "",
-        "",
-        "COVID-19",
-        "",
-        "",
-        "",
-    ]
-
-    print(validator.icd_validate(predict, target))

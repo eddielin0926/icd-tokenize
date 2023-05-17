@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "icd-tokenize"
+version = "0.1.0"
+description = ""
+authors = ["Eddie Lin <eddielin0926@gmail.com>"]
+readme = "README.md"
+packages = [{include = "icd_tokenize"}]
+
+[tool.poetry.scripts]
+start = "icd_tokenize.main:main"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+black = "^23.3.0"
+numpy = "^1.24.3"
+openpyxl = "3.1.1"
+pandas = "^2.0.1"
+pygtrie = "^2.5.0"
+rich = "^13.3.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

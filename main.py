@@ -5,9 +5,8 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 from datetime import datetime
-from tokenizer import ICDTokenizer
-from validator import ICDValidator
 from rich.progress import track
+from icd_tokenize import ICDTokenizer, ICDValidator
 
 
 # Start process timing

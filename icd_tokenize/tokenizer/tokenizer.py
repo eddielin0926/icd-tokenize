@@ -74,18 +74,3 @@ class ICDTokenizer:
         result = self._post_process(result)
 
         return result
-
-
-if __name__ == "__main__":
-    icd_df = pd.read_csv("./icd/icd.csv")
-    icd_series = icd_df["diagnosis"]
-
-    tokenizer = ICDTokenizer(icd_series)
-
-    text = "頸椎轉移性癌症併四肢癱瘓"
-
-    print(f"input text: {text}")
-
-    result = tokenizer.extract_icd(text)
-
-    print(f"result list: {result}")
