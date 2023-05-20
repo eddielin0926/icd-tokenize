@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.table import Table
 from datetime import datetime
 from rich.progress import track
-from icd_tokenize import ICDTokenizer, ICDValidator
+from icd_tokenize import ICD, ICDTokenizer, ICDValidator
 
 
 # Start process timing
@@ -23,14 +23,15 @@ tmp_record_dir = f"tmp/{timestamp}"
 os.makedirs(tmp_record_dir)
 
 # Load ICD Dictionary
-icd_df = pd.read_csv("./icd/icd.csv")
-icd_series = icd_df["diagnosis"]
+icd = ICD()
+icd_series = icd.series
+synonyms_path = os.path.join(icd.data_path, "synonyms.txt")
 
 # Load ICD tokenizer
-tokenizer = ICDTokenizer(icd_series)
+tokenizer = ICDTokenizer(icd_series, path=synonyms_path)
 
 # Load ICD validator
-validator = ICDValidator()
+validator = ICDValidator(path=synonyms_path)
 
 records = []
 total_correct = 0

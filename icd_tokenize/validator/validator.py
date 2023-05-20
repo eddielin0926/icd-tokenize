@@ -10,17 +10,10 @@ class ICDValidator:
         predict = [predict[i : i + 4] for i in range(0, len(predict), 4)]
         target = [target[i : i + 4] for i in range(0, len(target), 4)]
         for pred, trgt in zip(predict, target):
-            for str1 in pred:
-                if str1 == "":
-                    continue
-                exist = False
-                for str2 in trgt:
-                    if str2 == "":
-                        continue
-                    if self._icd_compare(str1, str2):
-                        exist = True
-                        break
-                if not exist:
+            pred = sorted(pred)
+            trgt = sorted(trgt)
+            for str1, str2 in zip(pred, trgt):
+                if not self._icd_compare(str1, str2):
                     return False
         return True
 

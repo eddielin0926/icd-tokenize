@@ -11,13 +11,17 @@ start = "icd_tokenize.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-black = "^23.3.0"
 numpy = "^1.24.3"
 openpyxl = "3.1.1"
 pandas = "^2.0.1"
 pygtrie = "^2.5.0"
 rich = "^13.3.5"
+ipykernel = "^6.23.1"
+semantic-kernel = "^0.2.8.dev0"
+jieba = "^0.42.1"
 
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
 
 [build-system]
 requires = ["poetry-core"]

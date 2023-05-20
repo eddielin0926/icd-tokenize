@@ -4,7 +4,7 @@ import re
 
 
 class ICDTokenizer:
-    def __init__(self, data, path="icd/synonyms.txt") -> None:
+    def __init__(self, data, path="synonyms.txt") -> None:
         self.trie = pygtrie.CharTrie()
         for element in data:
             self.trie[element] = True

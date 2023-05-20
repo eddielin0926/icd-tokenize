@@ -1,10 +1,13 @@
 {
     "cSpell.words": [
         "autopep",
+        "davinci",
         "iloc",
+        "ipykernel",
         "iterrows",
         "jieba",
         "numpy",
+        "openai",
         "openpyxl",
         "pygtrie",
         "rslt",
