@@ -2,18 +2,16 @@ import pandas as pd
 import pygtrie
 import re
 
+from icd_tokenize import ICD
+
 
 class ICDTokenizer:
-    def __init__(self, data, path="synonyms.txt") -> None:
+    def __init__(self, icd: ICD = ICD()) -> None:
         self.trie = pygtrie.CharTrie()
-        for element in data:
+        for element in icd.synonyms:
             self.trie[element] = True
 
-        with open(path, "r", encoding="utf-8") as f:
-            self.synonyms_list = []
-            for line in f.readlines():
-                line = line.replace("\n", "")
-                self.synonyms_list.append(line.split(","))
+        self.synonyms = icd.synonyms
 
     def _pre_process(self, data: str) -> str:
         data = re.sub(r"(?<!合)併(?!發)", "", data)
@@ -24,28 +22,13 @@ class ICDTokenizer:
         data = re.sub(r"_", "", data)
         data = re.sub(r"\s", "", data)
         data = data.replace("COVID19", "COVID-19")
-        if __name__ == "__main__":
-            print(f"pre-process: {data}")
         return data
 
     def _post_process(self, data: list) -> list:
-        # switch to synonym
         for i in range(len(data)):
-            for synonym in self.synonyms_list:
+            for synonym in self.synonyms:
                 if data[i] in synonym:
                     data[i] = synonym[0]
-
-        # # remove subset words
-        # result = []
-        # for i in range(len(data)):
-        #     is_subset = False
-        #     for j in range(len(data)):
-        #         if i != j:
-        #             if data[i] in data[j]:
-        #                 is_subset = True
-        #                 break
-        #     if not is_subset:
-        #         result.append(data[i])
 
         data = list(dict.fromkeys(data))
 
@@ -58,14 +41,6 @@ class ICDTokenizer:
         while input != "":
             prefix = self.trie.longest_prefix(input).key
             if prefix is None:
-                # if self.trie.has_subtrie(input[0]):
-                #     count = 0
-                #     while count < (len(input) - 1):
-                #         if self.trie.has_key(input[0] + input[count:]):
-                #             prefix = input[0] + input[count:]
-                #             result.append(prefix)
-                #             break
-                #         count += 1
                 input = input[1:]
             else:
                 input = input.removeprefix(prefix)

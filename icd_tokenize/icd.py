@@ -11,12 +11,15 @@ class ICD:
     def __init__(self, dir_path: str = None) -> None:
         if dir_path is None:
             dir_path = os.path.join(os.path.dirname(__file__), "data")
+
         # diagnosis
-        file_path = os.path.join(self.data_path, "icd.csv")
-        df = pd.read_csv(file_path)
+        diagnosis_file = os.path.join(dir_path, "icd.csv")
+        df = pd.read_csv(diagnosis_file)
         self.diagnosis = df["diagnosis"].to_list()
+
         # synonyms
-        with open(path, "r", encoding="utf-8") as f:
+        synonyms_file = os.path.join(dir_path, "synonyms.txt")
+        with open(synonyms_file, "r", encoding="utf-8") as f:
             self.synonyms = []
             for line in f.readlines():
                 line = line.replace("\n", "")

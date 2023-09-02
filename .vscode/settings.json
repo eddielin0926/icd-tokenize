@@ -1,9 +1,6 @@
 {
   "editor.formatOnSave": true,
   "files.autoSave": "onFocusChange",
-  "python.analysis.diagnosticSeverityOverrides": {
-    "reportShadowedImports": "none"
-  },
   "cSpell.words": [
     "autopep",
     "davinci",
