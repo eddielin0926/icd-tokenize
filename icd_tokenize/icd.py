@@ -1,11 +1,12 @@
+import argparse
 import os
 import time
-import pygtrie
+
 import numpy as np
 import pandas as pd
-from rich.progress import track
+import pygtrie
 from rich.console import Console
-import argparse
+from rich.progress import track
 
 
 class ICD:
@@ -29,7 +30,9 @@ class ICD:
 
 def generate_icd(data_dir: str, icd_file: str = None):
     if icd_file is None:
-        icd_file = os.path.join(os.path.dirname(__file__), "data", "中文字典_1100712_提供張老師_自定義字典.xlsx")
+        icd_file = os.path.join(
+            os.path.dirname(__file__), "data", "中文字典_1100712_提供張老師_自定義字典.xlsx"
+        )
     if not os.path.exists(icd_file):
         raise ValueError(f"File '{icd_file}' doesn't exist.")
     if not os.path.exists(data_dir):

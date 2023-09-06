@@ -1,6 +1,6 @@
-import pandas as pd
-import pygtrie
 import re
+
+import pygtrie
 
 from icd_tokenize import ICD
 

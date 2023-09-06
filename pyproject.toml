@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Eddie Lin <eddielin0926@gmail.com>"]
 readme = "README.md"
-packages = [{include = "icd_tokenize"}]
+packages = [{ include = "icd_tokenize" }]
 
 [tool.poetry.scripts]
 start = "icd_tokenize.main:main"
@@ -21,7 +21,12 @@ semantic-kernel = "^0.2.8.dev0"
 jieba = "^0.42.1"
 
 [tool.poetry.group.dev.dependencies]
+pre-commit = "^3.4.0"
 black = "^23.3.0"
+isort = "^5.12.0"
+ruff = "^0.0.287"
+pytest = "^7.4.1"
+pytest-cov = "^4.1.0"
 
 [tool.black]
 line-length = 100

@@ -1,13 +1,14 @@
 import os
 import time
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 from rich.console import Console
-from rich.table import Table
-from datetime import datetime
 from rich.progress import track
-from icd_tokenize import ICD, ICDTokenizer, ICDValidator
+from rich.table import Table
 
+from icd_tokenize import ICD, ICDTokenizer, ICDValidator
 
 # Start process timing
 start_time = time.time()
