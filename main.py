@@ -24,24 +24,25 @@ os.makedirs(tmp_record_dir)
 
 # Load ICD Dictionary
 icd = ICD()
-icd_series = icd.series
-synonyms_path = os.path.join(icd.data_path, "synonyms.txt")
 
 # Load ICD tokenizer
-tokenizer = ICDTokenizer(icd_series, path=synonyms_path)
+tokenizer = ICDTokenizer(icd)
 
 # Load ICD validator
-validator = ICDValidator(path=synonyms_path)
+validator = ICDValidator(icd)
 
 records = []
 total_correct = 0
 total_count = 0
-for file in os.listdir("./data"):
-    if file[:2] == "~$":  # Prevent processing temporary excel files
-        continue
 
+data_dir = "data"
+files = os.listdir(data_dir)
+files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary excel files
+files = filter(lambda f: "(11102)" in f, files)  # Delete this line to process all files
+
+for file in files:
     # Load Dataset
-    df = pd.read_excel(f"./data/{file}", header=1)
+    df = pd.read_excel(os.path.join(data_dir, file), header=1)
     df = df.drop("NO", axis=1)
     df = df.replace(np.nan, "", regex=True)  # replace nan with empty string
 
@@ -55,11 +56,11 @@ for file in os.listdir("./data"):
         df_target[col] = df_target[col].str.normalize("NFKC")
 
     # Prediction
-    input_list = []
-    error_list = []
-    answer_list = []
-    correct_count = 0
-    current_count = 0
+    inputs = []
+    errors = []
+    answers = []
+    corrects = 0
+    counts = 0
     is_dirty_data = False
     for idx, row in track(
         df_input.iterrows(), total=len(df_input.index), description=f"[green]{file} "
@@ -90,10 +91,10 @@ for file in os.listdir("./data"):
             continue  # skip dirty data
 
         row_target = df_target.iloc[idx].to_list()
-        current_count += 1
+        counts += 1
 
         if validator.icd_validate(row_result, row_target):  # result is correct
-            correct_count += 1
+            corrects += 1
         else:
             # From 1x20 reshape to 5x4
             row_input = [row.to_list()[4 * i : 4 * (i + 1)] for i in range(5)]
@@ -103,31 +104,29 @@ for file in os.listdir("./data"):
             # Collect error records
             for inp, res, tar in zip(row_input, row_result, row_target):
                 if res != tar:
-                    input_list.append(inp)
-                    error_list.append(res)
-                    answer_list.append(tar)
+                    inputs.append(inp)
+                    errors.append(res)
+                    answers.append(tar)
 
     # Collect accuracy
-    accuracy = correct_count * 100 / current_count
     records.append(
         {
             "name": file,
-            "correct": correct_count,
-            "total": current_count,
-            "accuracy": accuracy,
+            "correct": corrects,
+            "total": counts,
         }
     )
 
     # Add data count
-    total_correct += correct_count
-    total_count += current_count
+    total_correct += corrects
+    total_count += counts
 
     # Dump error records
     tmpdir = f"{tmp_record_dir}/{file[:7]}"
     os.makedirs(f"{tmpdir}")
-    pd.DataFrame(input_list).to_csv(f"{tmpdir}/input.csv")
-    pd.DataFrame(error_list).to_csv(f"{tmpdir}/error.csv")
-    pd.DataFrame(answer_list).to_csv(f"{tmpdir}/answer.csv")
+    pd.DataFrame(inputs).to_csv(f"{tmpdir}/input.csv")
+    pd.DataFrame(errors).to_csv(f"{tmpdir}/error.csv")
+    pd.DataFrame(answers).to_csv(f"{tmpdir}/answer.csv")
 
 
 # Dump process information
@@ -152,11 +151,11 @@ table.add_column("Name")
 table.add_column("Correct / Total")
 table.add_column("Accuracy")
 for record in records:
-    table.add_row(
-        record["name"],
-        f"{record['correct']} / {record['total']}",
-        f"{round(record['accuracy'], 1)}%",
-    )
+    name = record["name"]
+    correct = record["correct"]
+    total = record["total"]
+    accuracy = round((correct / total) * 100, 1)
+    table.add_row(name, f"{correct} / {total}", f"{accuracy}%")
 console.print(table)
 
 # Finish process timing

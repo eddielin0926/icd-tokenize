@@ -2,7 +2,9 @@ from icd_tokenize.icd import ICD
 
 
 class ICDValidator:
-    def __init__(self, icd: ICD = ICD()) -> None:
+    def __init__(self, icd: ICD = None) -> None:
+        if icd is None:
+            icd = ICD()
         self.synonyms = icd.synonyms
 
     def icd_validate(self, predict: list, target: list) -> bool:
@@ -23,4 +25,12 @@ class ICDValidator:
         for synonym in self.synonyms:
             if str1 in synonym and str2 in synonym:
                 return True
+        if str1 + "疾病" == str2 or str1 == str2 + "疾病":
+            return True
+        if str1 + "術後" == str2 or str1 == str2 + "術後":
+            return True
+        if str1 + "末期" == str2 or str1 == str2 + "末期":
+            return True
+        if str1 + "病史" == str2 or str1 == str2 + "病史":
+            return True
         return False

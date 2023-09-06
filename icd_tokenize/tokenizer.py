@@ -6,9 +6,11 @@ from icd_tokenize import ICD
 
 
 class ICDTokenizer:
-    def __init__(self, icd: ICD = ICD()) -> None:
+    def __init__(self, icd: ICD = None) -> None:
+        if icd is None:
+            icd = ICD()
         self.trie = pygtrie.CharTrie()
-        for element in icd.synonyms:
+        for element in icd.diagnosis:
             self.trie[element] = True
 
         self.synonyms = icd.synonyms
@@ -25,11 +27,6 @@ class ICDTokenizer:
         return data
 
     def _post_process(self, data: list) -> list:
-        for i in range(len(data)):
-            for synonym in self.synonyms:
-                if data[i] in synonym:
-                    data[i] = synonym[0]
-
         data = list(dict.fromkeys(data))
 
         return data
