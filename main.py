@@ -10,11 +10,17 @@ from rich.table import Table
 
 from icd_tokenize import ICD, ICDTokenizer, ICDValidator
 
-# Start process timing
-start_time = time.time()
+
+def percent(a, b, digit=2):
+    return str(round((a / b) * 100, digit)) + "%"
+
 
 # Create rich console
 console = Console()
+
+# Start process timing
+start_time = time.time()
+console.print(":rocket: start processing")
 
 # Create tmp directory
 if not os.path.exists("tmp"):
@@ -22,6 +28,9 @@ if not os.path.exists("tmp"):
 timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 tmp_record_dir = f"tmp/{timestamp}"
 os.makedirs(tmp_record_dir)
+console.print(
+    f":open_file_folder: create output directory: [yellow]{os.path.abspath(tmp_record_dir)}[/]"
+)
 
 # Load ICD Dictionary
 icd = ICD()
@@ -32,14 +41,15 @@ tokenizer = ICDTokenizer(icd)
 # Load ICD validator
 validator = ICDValidator(icd)
 
-records = []
-total_correct = 0
-total_count = 0
+records = []  # statistical data of processing results from each files
+total_correct = 0  # number of correct result
+total_count = 0  # number of data been processed
+total_dirty = 0  # number of dirty data
 
 data_dir = "data"
 files = os.listdir(data_dir)
 files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary excel files
-files = filter(lambda f: "(11102)" in f, files)  # Delete this line to process all files
+# files = filter(lambda f: "(11102)" in f, files)  # Delete this line to process all files
 
 for file in files:
     # Load Dataset
@@ -52,7 +62,7 @@ for file in files:
     for col in df_input.columns:
         df_input[col] = df_input[col].str.normalize("NFKC")
     df_target = df.iloc[:, 22:42]  # 甲.1, 甲2.1, ..., 其他3.1, 其他4.1
-    df_target.columns = df_target.columns.str.rstrip(".1")
+    df_target.columns = df_target.columns.str.rstrip(".1")  # remove ".1" in column name
     for col in df_target.columns:
         df_target[col] = df_target[col].str.normalize("NFKC")
 
@@ -61,22 +71,32 @@ for file in files:
     errors = []
     answers = []
     corrects = 0
-    counts = 0
-    is_dirty_data = False
+    dirties = 0
+    total = len(df_input.index)
     for idx, row in track(
-        df_input.iterrows(), total=len(df_input.index), description=f"[green]{file} "
+        df_input.iterrows(),
+        total=total,
+        description=f":page_facing_up: [green]{file} ",
+        console=console,
     ):
-        row_result = []
+        is_row_correct = True
+        is_dirty_data = False
         for catalog in ["甲", "乙", "丙", "丁", "其他"]:
+            catalog_input = []
+            catalog_target = []
             catalog_result = []
+
             for i in ["", "2", "3", "4"]:
                 data = row[f"{catalog}{i}"]
+                catalog_input.append(data)
+                catalog_target.append(df_target[f"{catalog}{i}"][idx])
 
                 if "?" in data:  # Unreadable character in string
                     is_dirty_data = True
 
-                col_result = tokenizer.extract_icd(data)
-                catalog_result.extend(col_result)
+                if data != "":
+                    col_result = tokenizer.extract_icd(data)
+                    catalog_result.extend(col_result)
 
             catalog_result = list(dict.fromkeys(catalog_result))
 
@@ -85,42 +105,36 @@ for file in files:
                 catalog_result.append("")
 
             # Truncate exceed result
-            row_result.extend(catalog_result[:4])
+            catalog_result = catalog_result[:4]
 
-        if is_dirty_data:
-            is_dirty_data = False
-            continue  # skip dirty data
+            if not validator.icd_validate(catalog_result, catalog_target):
+                is_row_correct = False
 
-        row_target = df_target.iloc[idx].to_list()
-        counts += 1
+                # Collect error records
+                inputs.append(catalog_input)
+                errors.append(catalog_result)
+                answers.append(catalog_target)
 
-        if validator.icd_validate(row_result, row_target):  # result is correct
+        if is_row_correct:
             corrects += 1
-        else:
-            # From 1x20 reshape to 5x4
-            row_input = [row.to_list()[4 * i : 4 * (i + 1)] for i in range(5)]
-            row_result = [row_result[4 * i : 4 * (i + 1)] for i in range(5)]
-            row_target = [row_target[4 * i : 4 * (i + 1)] for i in range(5)]
-
-            # Collect error records
-            for inp, res, tar in zip(row_input, row_result, row_target):
-                if res != tar:
-                    inputs.append(inp)
-                    errors.append(res)
-                    answers.append(tar)
+        if is_dirty_data:
+            dirties += 1
 
     # Collect accuracy
     records.append(
         {
             "name": file,
             "correct": corrects,
-            "total": counts,
+            "total": total,
+            "accuracy": corrects * 100 / total,
+            "dirty": dirties,
         }
     )
 
     # Add data count
     total_correct += corrects
-    total_count += counts
+    total_count += total
+    total_dirty += dirties
 
     # Dump error records
     tmpdir = f"{tmp_record_dir}/{file[:7]}"
@@ -140,30 +154,33 @@ df_total = pd.DataFrame(
             "correct": total_correct,
             "total": total_count,
             "accuracy": total_accuracy,
+            "dirty": total_dirty,
         }
     ]
 )
 df_record = pd.concat([df_record, df_total], ignore_index=True)
 df_record.to_csv(f"{tmp_record_dir}/result.csv", index=False)
 
-# Print accuracy table
+# Display result Table of each file
 table = Table(title="Result")
-table.add_column("Name")
+table.add_column("File")
 table.add_column("Correct / Total")
 table.add_column("Accuracy")
+table.add_column("Dirty")
 for record in records:
-    name = record["name"]
-    correct = record["correct"]
-    total = record["total"]
-    accuracy = round((correct / total) * 100, 1)
-    table.add_row(name, f"{correct} / {total}", f"{accuracy}%")
+    table.add_row(
+        record["name"],
+        f"{record['correct']} / {record['total']}",
+        percent(record["correct"], record["total"]),
+        percent(record["dirty"], record["total"]),
+    )
 console.print(table)
 
 # Finish process timing
 end_time = time.time()
 elapsed_time = end_time - start_time
 
-# Print result
-console.print(f"total accuracy:\t [green bold]{round(total_accuracy, 2)}%[/]")
-console.print(f"total data:\t [green bold]{total_count}[/]")
-console.print(f"elapsed time:\t [green bold]{round(elapsed_time, 3)}s[/]")
+# Print final result
+console.print(f":white_check_mark: total accuracy:\t[green bold]{round(total_accuracy, 2)}%[/]")
+console.print(f":floppy_disk: total data:\t\t[green bold]{total_count}[/]")
+console.print(f":hourglass: elapsed time:\t[green bold]{round(elapsed_time, 3)}s[/]")
