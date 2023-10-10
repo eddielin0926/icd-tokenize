@@ -1,4 +1,5 @@
 import os
+import re
 import time
 from datetime import datetime
 
@@ -121,9 +122,10 @@ for file in files:
             dirties += 1
 
     # Collect accuracy
+    name = re.search(r"\((.*?)\)", file).group(1)
     records.append(
         {
-            "name": file,
+            "name": name,
             "correct": corrects,
             "total": total,
             "accuracy": corrects * 100 / total,
@@ -137,7 +139,7 @@ for file in files:
     total_dirty += dirties
 
     # Dump error records
-    tmpdir = f"{tmp_record_dir}/{file[:7]}"
+    tmpdir = f"{tmp_record_dir}/{name}"
     os.makedirs(f"{tmpdir}")
     pd.DataFrame(inputs).to_csv(f"{tmpdir}/input.csv")
     pd.DataFrame(errors).to_csv(f"{tmpdir}/error.csv")
@@ -164,13 +166,15 @@ df_record.to_csv(f"{tmp_record_dir}/result.csv", index=False)
 # Display result Table of each file
 table = Table(title="Result")
 table.add_column("File")
-table.add_column("Correct / Total")
+table.add_column("Correct")
+table.add_column(" Total")
 table.add_column("Accuracy")
 table.add_column("Dirty")
 for record in records:
     table.add_row(
         record["name"],
-        f"{record['correct']} / {record['total']}",
+        record["correct"],
+        record["total"],
         percent(record["correct"], record["total"]),
         percent(record["dirty"], record["total"]),
     )
