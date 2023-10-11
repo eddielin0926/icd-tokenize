@@ -17,6 +17,8 @@ pandas = "^2.0.1"
 pygtrie = "^2.5.0"
 rich = "^13.3.5"
 ipykernel = "^6.23.1"
+transformers = {extras = ["torch"], version = "^4.34.0"}
+torch = "^2.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"
