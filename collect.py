@@ -50,14 +50,14 @@ for file in files:
                 catalog_input.append(data)
                 catalog_target.append(df_target[f"{catalog}{i}"][idx])
 
-            catalog_input = list(filter(lambda x: x != "", catalog_input))
-            catalog_target = list(filter(lambda x: x != "", catalog_target))
+            catalog_input = list(filter(lambda x: x != "" and "?" not in x, catalog_input))
+            catalog_target = list(filter(lambda x: x != "" and "?" not in x, catalog_target))
 
             if len(catalog_input) == 0 or len(catalog_target) == 0:
                 continue
 
-            catalogs.append(str(catalog_target))
-            text.append("、".join(catalog_input))
+            catalogs.append(catalog_target)
+            text.append("。".join(catalog_input))
 
 df = pd.DataFrame({"catalogs": catalogs, "text": text})
 df.to_csv("data.csv", index_label="id")
