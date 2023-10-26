@@ -131,6 +131,4 @@ if __name__ == "__main__":
     if not os.path.exists(args.data):
         print(f"Directory '{args.data}' doesn't exist.")
 
-    print(args.icd)
-
     generate_icd(data_dir=args.data, icd_file=args.icd)

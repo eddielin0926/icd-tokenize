@@ -20,6 +20,10 @@ files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary e
 catalogs = []
 text = []
 
+type1 = 0  # same
+type2 = 1  # transform
+type3 = 1  # remove
+
 for file in files:
     # Load Dataset
     df = pd.read_excel(os.path.join(data_dir, file), header=1)
@@ -56,15 +60,27 @@ for file in files:
             if len(catalog_input) == 0 or len(catalog_target) == 0:
                 continue
 
-            catalogs.append(catalog_target)
-            text.append("。".join(catalog_input))
+            if "惡性腫瘤" in str(catalog_input):
+                if "惡性腫瘤" in str(catalog_target):
+                    type1 += 1
+                elif "癌" in str(catalog_target):
+                    type2 += 1
+                else:
+                    type3 += 1
+                catalogs.append(catalog_target)
+                text.append("。".join(catalog_input))
 
 df = pd.DataFrame({"catalogs": catalogs, "text": text})
-df.to_csv("data.csv", index_label="id")
+df.to_csv("data-惡性腫瘤.csv", index_label="id")
 
 # Finish process timing
 end_time = time.time()
 elapsed_time = end_time - start_time
 
 # Print final result
+total = type1 + type2 + type3
+console.print(f'包含有"惡性腫瘤"的輸入共有{total}個')
+console.print(f'結果含有"惡性腫瘤"的輸出共有{type1}個，佔{round(type1/total*100, 2)}%')
+console.print(f'結果含有"癌"的輸出共有{type2}個，佔{round(type2/total*100, 2)}%')
+console.print(f"結果不含兩者的輸出共有{type3}個，佔{round(type3/total*100, 2)}%")
 console.print(f":hourglass: elapsed time:\t[green bold]{round(elapsed_time, 3)}s[/]")

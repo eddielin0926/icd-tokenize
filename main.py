@@ -167,14 +167,14 @@ df_record.to_csv(f"{tmp_record_dir}/result.csv", index=False)
 table = Table(title="Result")
 table.add_column("File")
 table.add_column("Correct")
-table.add_column(" Total")
+table.add_column("Total")
 table.add_column("Accuracy")
 table.add_column("Dirty")
 for record in records:
     table.add_row(
         record["name"],
-        record["correct"],
-        record["total"],
+        str(record["correct"]),
+        str(record["total"]),
         percent(record["correct"], record["total"]),
         percent(record["dirty"], record["total"]),
     )
