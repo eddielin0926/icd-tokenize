@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 import re
 import time
@@ -5,11 +7,19 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from pandas.io.formats import excel
 from rich.console import Console
 from rich.progress import track
 from rich.table import Table
 
-from icd_tokenize import ICD, ICDTokenizer, ICDValidator
+from icd_tokenize import ICD, ICDTokenizer, ICDValidator, Record
+
+excel.ExcelFormatter.header_style = None
+
+parser = argparse.ArgumentParser(prog="icd-tokenize", description="ICD Tokenizer")
+parser.add_argument("-j", "--json", help="output json file", action="store_true")
+parser.add_argument("-e", "--excel", help="output excel file", action="store_true")
+args = parser.parse_args()
 
 
 def percent(a, b, digit=2):
@@ -42,7 +52,7 @@ tokenizer = ICDTokenizer(icd)
 # Load ICD validator
 validator = ICDValidator(icd)
 
-records = []  # statistical data of processing results from each files
+stats = []  # statistical data of processing results from each files
 total_correct = 0  # number of correct result
 total_count = 0  # number of data been processed
 total_dirty = 0  # number of dirty data
@@ -50,9 +60,15 @@ total_dirty = 0  # number of dirty data
 data_dir = "data"
 files = os.listdir(data_dir)
 files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary excel files
-# files = filter(lambda f: "(11102)" in f, files)  # Delete this line to process all files
+files = filter(lambda f: "(11104)" in f, files)  # Delete this line to process all files
+
 
 for file in files:
+    # Extract year and month from file name
+    year_month = file[file.find("(") + 1 : file.find(")")]
+    year = int(year_month[:3])
+    month = int(year_month[3:])
+
     # Load Dataset
     df = pd.read_excel(os.path.join(data_dir, file), header=1)
     df = df.drop("NO", axis=1)
@@ -68,6 +84,7 @@ for file in files:
         df_target[col] = df_target[col].str.normalize("NFKC")
 
     # Prediction
+    records: list[Record] = []  # store result of each row
     inputs = []
     errors = []
     answers = []
@@ -80,6 +97,8 @@ for file in files:
         description=f":page_facing_up: [green]{file} ",
         console=console,
     ):
+        result = Record(year=year, month=month, serial=int(df["流水號"][idx]), number=idx + 1)
+
         is_row_correct = True
         is_dirty_data = False
         for catalog in ["甲", "乙", "丙", "丁", "其他"]:
@@ -108,22 +127,31 @@ for file in files:
             # Truncate exceed result
             catalog_result = catalog_result[:4]
 
+            # Assign result to record
+            result.inputs[catalog] = catalog_input
+            result.tokens[catalog] = catalog_result
+
+            # Verify result
             if not validator.icd_validate(catalog_result, catalog_target):
                 is_row_correct = False
 
-                # Collect error records
+                # Collect error result
                 inputs.append(catalog_input)
                 errors.append(catalog_result)
                 answers.append(catalog_target)
 
+        # Collect result
+        records.append(result)
+
         if is_row_correct:
             corrects += 1
+            result.is_correct = True
         if is_dirty_data:
             dirties += 1
 
     # Collect accuracy
     name = re.search(r"\((.*?)\)", file).group(1)
-    records.append(
+    stats.append(
         {
             "name": name,
             "correct": corrects,
@@ -138,17 +166,49 @@ for file in files:
     total_count += total
     total_dirty += dirties
 
-    # Dump error records
+    # Dump error result
     tmpdir = f"{tmp_record_dir}/{name}"
     os.makedirs(f"{tmpdir}")
     pd.DataFrame(inputs).to_csv(f"{tmpdir}/input.csv")
     pd.DataFrame(errors).to_csv(f"{tmpdir}/error.csv")
     pd.DataFrame(answers).to_csv(f"{tmpdir}/answer.csv")
 
+    # Dump json result
+    if args.json:
+        with open(f"{tmpdir}/{year_month}.json", "w", encoding="utf-8") as f:
+            json_records = [e.for_json() for e in records]
+            json.dump(json_records, f, ensure_ascii=False)
+
+    # Dump excel result
+    if args.excel:
+        with pd.ExcelWriter(f"{tmpdir}/{year_month}.xlsx") as writer:
+            excel_correct = [e.for_excel() for e in records if e.is_correct]
+            pd.DataFrame(excel_correct).to_excel(
+                writer, sheet_name=f"{year_month}_斷詞正確", index=False
+            )
+            worksheet = writer.sheets[f"{year_month}_斷詞正確"]
+            shift = 0
+            for catalog in ["甲", "乙", "丙", "丁", "其他"]:
+                for i in ["", "2", "3", "4"]:
+                    worksheet.write_string(0, 24 + shift, f"{catalog}{i}")
+                    shift += 1
+
+            excel_error = [e.for_excel() for e in records if not e.is_correct]
+            pd.DataFrame(excel_error).to_excel(
+                writer, sheet_name=f"{year_month}_斷詞錯誤", index=False
+            )
+
+            worksheet = writer.sheets[f"{year_month}_斷詞錯誤"]
+            shift = 0
+            for catalog in ["甲", "乙", "丙", "丁", "其他"]:
+                for i in ["", "2", "3", "4"]:
+                    worksheet.write_string(0, 24 + shift, f"{catalog}{i}")
+                    shift += 1
+
 
 # Dump process information
 total_accuracy = total_correct * 100 / total_count
-df_record = pd.DataFrame(records, index=None)
+df_record = pd.DataFrame(stats, index=None)
 df_total = pd.DataFrame(
     [
         {
@@ -170,7 +230,7 @@ table.add_column("Correct")
 table.add_column("Total")
 table.add_column("Accuracy")
 table.add_column("Dirty")
-for record in records:
+for record in stats:
     table.add_row(
         record["name"],
         str(record["correct"]),

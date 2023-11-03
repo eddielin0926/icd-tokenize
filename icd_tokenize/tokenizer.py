@@ -7,7 +7,7 @@ from icd_tokenize import ICD
 
 
 class ICDTokenizer:
-    def __init__(self, icd: ICD = None) -> None:
+    def __init__(self, icd: ICD = None, experimental=False) -> None:
         if icd is None:
             icd = ICD()
         self.trie = pygtrie.CharTrie()
@@ -16,10 +16,40 @@ class ICDTokenizer:
 
         self.synonyms = icd.synonyms
 
+        self.experimental = experimental
+
+        body_parts = [
+            "男",
+            "女",
+            "頭",
+            "胸",
+            "手",
+            "腹",
+            "腿",
+            "腦",
+            "眼",
+            "肺",
+            "肝",
+            "腎",
+            "心",
+            "脾",
+            "胃",
+        ]
+        self.body_parts = dict.fromkeys(body_parts)
+
+    def _scoring(self, data: str) -> int:
+        score = 0
+        for c in data:
+            if c in self.body_parts:
+                score += 1
+        return score
+
     def _pre_process(self, data: str) -> str:
         data = re.sub(r"(?<!合)併(?!發)", "", data)
         data = re.sub(r"合併(?!症)", "", data)
         data = re.sub(r"併發(?!症)", "", data)
+        data = re.sub(r"無明顯外傷性死因", "", data)
+        data = re.sub(r"無明顯外傷", "", data)
         data = re.sub(r"及", "", data)
         data = re.sub(r"並", "", data)
         data = re.sub(r"_", "", data)
@@ -89,14 +119,15 @@ class ICDTokenizer:
 
     def _post_process(self, data: list) -> list:
         data = list(dict.fromkeys(data))
-        data.sort(key=lambda s: len(s), reverse=True)
+        data = data[:4]
 
-        result = []
-        for s in data:
-            if not any([self.is_subset(s, r) for r in result]):
-                result.append(s)
+        if self.experimental:
+            result = []
+            for s in data:
+                if not any([self.is_subset(s, r) for r in result]):
+                    result.append(s)
 
-        return result
+        return data
 
     def extract_icd(self, input_str: str):
         input_str = self._pre_process(input_str)
@@ -105,14 +136,16 @@ class ICDTokenizer:
         while input_str != "":
             prefix = self.trie.longest_prefix(input_str).key
             if prefix is None:
-                if self.trie.has_subtrie(input_str[0]):
-                    tmp_input = input_str[1:]
-                    length = len(tmp_input)
-                    for i in range(length, 1, -1):
-                        for e in list(itertools.combinations(tmp_input, i)):
-                            s = "".join(e)
-                            if self.trie.has_key(input_str[0] + s):
-                                result.append(input_str[0] + s)
+                if self.experimental:
+                    if self.trie.has_subtrie(input_str[0]):
+                        tmp_input = input_str[1:]
+                        tmp_result = {}
+                        length = len(tmp_input)
+                        for i in range(length, 1, -1):
+                            for e in list(itertools.combinations(tmp_input, i)):
+                                s = input_str[0] + "".join(e)
+                                if self.trie.has_key(s):
+                                    tmp_result[s] = self._scoring(s)
                 input_str = input_str[1:]
             else:
                 input_str = input_str.removeprefix(prefix)
@@ -125,13 +158,16 @@ class ICDTokenizer:
 
 if __name__ == "__main__":
     tokenizer = ICDTokenizer()
-    string = "大腸直腸癌伴有肺部、肝臟轉移"
-    # string = "女性右側乳房未明示部位惡性腫瘤"
-    # string = "上葉之左側支氣管或肺惡性腫瘤"
-    # string = "右上肺葉惡性腫瘤"
-    # string = "子宮肌層肉瘤末期"
-    # string = "乳腺惡性腫瘤"
-    # string = "上消化道大出血"
-    # string = "心肺腎衰竭"
-    # string = "瀰漫大B細胞淋巴瘤"
-    print(tokenizer.extract_icd(string))
+    tests = [
+        "大腸直腸癌伴有肺部、肝臟轉移",
+        "女性右側乳房未明示部位惡性腫瘤",
+        "上葉之左側支氣管或肺惡性腫瘤",
+        "右上肺葉惡性腫瘤",
+        "子宮肌層肉瘤末期",
+        "乳腺惡性腫瘤",
+        "上消化道大出血",
+        "心肺腎衰竭",
+        "瀰漫大B細胞淋巴瘤",
+    ]
+    for string in tests:
+        print(tokenizer.extract_icd(string))

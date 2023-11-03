@@ -30,3 +30,12 @@ class ICDValidator:
         if str1 + "病史" == str2 or str1 == str2 + "病史":
             return True
         return False
+
+
+if __name__ == "__main__":
+    validator = ICDValidator()
+    predict = ["肝臟轉移", "大腸直腸癌", "肺部轉移"]
+    predict.sort(key=lambda s: len(s), reverse=True)
+    print(predict)
+    target = ["大腸直腸癌", "肺部轉移", "肝臟轉移"]
+    print(validator.icd_validate(predict, target))
