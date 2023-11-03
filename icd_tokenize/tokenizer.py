@@ -130,6 +130,8 @@ class ICDTokenizer:
         return data
 
     def extract_icd(self, input_str: str):
+        if input_str == "":
+            return []
         input_str = self._pre_process(input_str)
 
         result = []

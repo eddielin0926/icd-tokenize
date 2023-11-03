@@ -1,6 +1,6 @@
-from icd_tokenize.icd import ICD, generate_icd
-from icd_tokenize.record import Record
-from icd_tokenize.tokenizer import ICDTokenizer
-from icd_tokenize.validator import ICDValidator
+from .icd import ICD, generate_icd
+from .record import Record
+from .tokenizer import ICDTokenizer
+from .validator import ICDValidator
 
 __all__ = ["ICD", "ICDTokenizer", "ICDValidator", "generate_icd", "Record"]
