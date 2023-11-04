@@ -3,6 +3,10 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Record:
+    """
+    Store result of each tokenized data
+    """
+
     year: int
     month: int
     serial: int
@@ -21,10 +25,12 @@ class Record:
 
     @property
     def is_correct(self):
+        """Return True if all results are correct"""
         return all(self.corrects.values())
 
     @property
     def dirty(self):
+        """Return the number of inputs that contains '?'"""
         count = 0
         for data in self.inputs.values():
             if any(["?" in d for d in data]):
@@ -32,6 +38,7 @@ class Record:
         return count
 
     def for_json(self):
+        """Return dict for json output"""
         data = {
             "資料鍵入年": str(self.year),
             "資料鍵入月": str(self.month).zfill(2),
@@ -47,6 +54,7 @@ class Record:
         return data
 
     def for_excel(self):
+        """Return dicts for excel output"""
         index = {"s_num": self.serial, "NO": self.number}
         before = {}
         after = {}
@@ -65,6 +73,7 @@ class Record:
         return index, before, after
 
     def get_errors(self):
+        """Return error data for csv output"""
         errors = []
         for catalog in ["甲", "乙", "丙", "丁", "其他"]:
             data = {"serial": self.serial, "catalog": catalog}

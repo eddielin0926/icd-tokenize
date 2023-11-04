@@ -1,4 +1,3 @@
-import itertools
 import re
 
 import pygtrie
@@ -15,34 +14,9 @@ class ICDTokenizer:
             self.trie[element] = True
 
         self.synonyms = icd.synonyms
+        print(self.synonyms)
 
         self.experimental = experimental
-
-        body_parts = [
-            "男",
-            "女",
-            "頭",
-            "胸",
-            "手",
-            "腹",
-            "腿",
-            "腦",
-            "眼",
-            "肺",
-            "肝",
-            "腎",
-            "心",
-            "脾",
-            "胃",
-        ]
-        self.body_parts = dict.fromkeys(body_parts)
-
-    def _scoring(self, data: str) -> int:
-        score = 0
-        for c in data:
-            if c in self.body_parts:
-                score += 1
-        return score
 
     def _pre_process(self, data: str) -> str:
         data = re.sub(r"(?<!合)併(?!發)", "", data)
@@ -107,32 +81,36 @@ class ICDTokenizer:
 
         return data
 
-    def is_subset(self, str1: str, str2: str) -> bool:
+    def _is_subset(self, str1: str, str2: str) -> bool:
         if str1 == str2:
             return False
-        if len(str1) > len(str2):
-            str1, str2 = str2, str1
         for i in str1:
             if i not in str2:
                 return False
         return True
 
-    def _post_process(self, data: list) -> list:
-        data = list(dict.fromkeys(data))
-        data = data[:4]
+    def _remove_synonyms(self, data: list) -> list:
+        result = []
+        for d in data:
+            if d in self.synonyms:
+                result.append(self.synonyms[d])
+            else:
+                result.append(d)
+        result = self._remove_duplicate(result)
+        return result
 
-        if self.experimental:
-            result = []
-            for s in data:
-                if not any([self.is_subset(s, r) for r in result]):
-                    result.append(s)
+    def _remove_subset(self, data: list) -> list:
+        return [e for e in data if not any([self._is_subset(e, r) for r in data])]
 
-        return data
+    def _remove_duplicate(self, data: list) -> list:
+        return list(dict.fromkeys(data))
 
     def extract_icd(self, input_str: str):
         if input_str == "":
-            return []
+            return [""]
         input_str = self._pre_process(input_str)
+        if self.trie.has_key(input_str):
+            return [input_str]
 
         result = []
         while input_str != "":
@@ -140,26 +118,28 @@ class ICDTokenizer:
             if prefix is None:
                 if self.experimental:
                     if self.trie.has_subtrie(input_str[0]):
-                        tmp_input = input_str[1:]
-                        tmp_result = {}
-                        length = len(tmp_input)
-                        for i in range(length, 1, -1):
-                            for e in list(itertools.combinations(tmp_input, i)):
-                                s = input_str[0] + "".join(e)
-                                if self.trie.has_key(s):
-                                    tmp_result[s] = self._scoring(s)
+                        possibles = [input_str[0]]
+                        for ch in input_str[1:]:
+                            currents = []
+                            for poss in possibles:
+                                if self.trie.has_node(poss + ch) != 0:
+                                    currents.append(poss + ch)
+                            possibles.extend(currents)
+                        possibles = [e for e in possibles if self.trie.has_key(e)]
+                        result.extend(possibles)
                 input_str = input_str[1:]
             else:
                 input_str = input_str.removeprefix(prefix)
                 result.append(prefix)
 
-        result = self._post_process(result)
+        result = self._remove_subset(result)
+        result = self._remove_duplicate(result)
 
         return result
 
 
 if __name__ == "__main__":
-    tokenizer = ICDTokenizer()
+    tokenizer = ICDTokenizer(experimental=True)
     tests = [
         "大腸直腸癌伴有肺部、肝臟轉移",
         "女性右側乳房未明示部位惡性腫瘤",
@@ -170,6 +150,9 @@ if __name__ == "__main__":
         "上消化道大出血",
         "心肺腎衰竭",
         "瀰漫大B細胞淋巴瘤",
+        "左股骨頸骨折、高血壓性心臟病、慢性腎臟病、攝護腺癌",
+        "手術修補 4.慢性腎衰竭經短期透析治療後5.高血壓 6.糖尿病7.院內死亡經急救後恢復心跳",
+        "跌落田埂旁水溝(深約1.3米)。",
     ]
     for string in tests:
         print(tokenizer.extract_icd(string))

@@ -18,9 +18,8 @@ class ICDValidator:
         str1, str2 = str1.upper(), str2.upper()
         if str1 == str2:
             return True
-        for synonym in self.synonyms:
-            if str1 in synonym and str2 in synonym:
-                return True
+        if str1 in self.synonyms and str2 in self.synonyms:
+            return self.synonyms[str1] == self.synonyms[str2]
         if str1 + "疾病" == str2 or str1 == str2 + "疾病":
             return True
         if str1 + "術後" == str2 or str1 == str2 + "術後":

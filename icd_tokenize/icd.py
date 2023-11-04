@@ -20,12 +20,14 @@ class ICD:
         self.diagnosis = df["diagnosis"].to_list()
 
         # synonyms
-        self.synonyms = []
+        self.synonyms = {}
         synonyms_file = os.path.join(dir_path, "synonyms.txt")
         with open(synonyms_file, "r", encoding="utf-8") as f:
             for line in f.readlines():
                 line = line.replace("\n", "")
-                self.synonyms.append(line.split(","))
+                syms = line.split(",")
+                for sym in syms:
+                    self.synonyms[sym] = syms[0]
 
 
 def generate_icd(data_dir: str, icd_file: str = None):

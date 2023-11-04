@@ -48,7 +48,7 @@ console.print(
 icd = ICD()
 
 # Load ICD tokenizer
-tokenizer = ICDTokenizer(icd)
+tokenizer = ICDTokenizer(icd, experimental=True)
 
 # Load ICD validator
 validator = ICDValidator(icd)
@@ -57,13 +57,9 @@ validator = ICDValidator(icd)
 data_dir = "data"
 files = os.listdir(data_dir)
 files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary excel files
-files = filter(lambda f: "(11104)" in f, files)  # Delete this line to process all files
+# files = filter(lambda f: "(11104)" in f, files)  # Delete this line to process all files
 
 stats = []  # statistical data of processing results from each files
-total_correct = 0  # number of correct result
-total_count = 0  # number of data been processed
-total_dirty = 0  # number of dirty data
-
 for file in files:
     # Extract year and month from file name
     year_month = file[file.find("(") + 1 : file.find(")")]
@@ -74,7 +70,7 @@ for file in files:
     df = pd.read_excel(os.path.join(data_dir, file), header=1)
     df = df.replace(np.nan, "", regex=True)  # replace nan with empty string
 
-    # Preprocess
+    # Split input and target and normalize data
     df_input = df.iloc[:, 1:21]  # 甲, 甲2, ..., 其他3, 其他4
     for col in df_input.columns:
         df_input[col] = df_input[col].str.normalize("NFKC")
@@ -83,7 +79,7 @@ for file in files:
     for col in df_target.columns:
         df_target[col] = df_target[col].str.normalize("NFKC")
 
-    # Prediction
+    # Tokenize input
     records: list[Record] = []  # store result of each row
     for idx, row in track(
         df_input.iterrows(),
@@ -105,6 +101,7 @@ for file in files:
                 targets.append(df_target[f"{catalog}{i}"][idx])
                 results.extend(tokenizer.extract_icd(data))
 
+            # Remove duplicate result
             results = list(dict.fromkeys(results))
 
             # Extend array length to 4
@@ -139,11 +136,6 @@ for file in files:
         }
     )
 
-    # Add data count
-    total_correct += corrects
-    total_count += counts
-    total_dirty += dirties
-
     # Dump error result
     tmpdir = f"{tmp_record_dir}/{year_month}"
     os.makedirs(f"{tmpdir}")
@@ -176,7 +168,10 @@ for file in files:
 
 
 # Dump process information
-total_accuracy = total_correct * 100 / total_count
+total_correct = sum([s["correct"] for s in stats])  # count correct records
+total_count = sum([s["total"] for s in stats])  # count total records
+total_accuracy = total_correct * 100 / total_count  # calculate total accuracy
+total_dirty = sum([s["dirty"] for s in stats])  # count dirty records
 total_stats = stats + [
     {
         "name": "total",
