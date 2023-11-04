@@ -101,9 +101,6 @@ for file in files:
                 targets.append(df_target[f"{catalog}{i}"][idx])
                 results.extend(tokenizer.extract_icd(data))
 
-            # Remove duplicate result
-            results = list(dict.fromkeys(results))
-
             # Extend array length to 4
             while len(results) < 4:
                 results.append("")
@@ -140,7 +137,7 @@ for file in files:
     tmpdir = f"{tmp_record_dir}/{year_month}"
     os.makedirs(f"{tmpdir}")
     errors = itertools.chain.from_iterable([r.get_errors() for r in records if not r.is_correct])
-    pd.DataFrame(errors).to_csv(f"{tmpdir}/{year_month}.csv")
+    pd.DataFrame(errors).to_csv(f"{tmpdir}/{year_month}.csv", index=False)
 
     # Dump json result
     if args.json:

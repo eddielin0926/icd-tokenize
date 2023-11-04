@@ -8,9 +8,13 @@ class ICDValidator:
         self.synonyms = icd.synonyms
 
     def icd_validate(self, predict: list, target: list) -> bool:
-        predict, target = sorted(predict), sorted(target)
-        for pred, trgt in zip(predict, target):
-            if not self._icd_compare(pred, trgt):
+        if len(predict) != len(target):
+            return False
+        for pred in predict:
+            if not any([self._icd_compare(pred, tar) for tar in target]):
+                return False
+        for tar in target:
+            if not any([self._icd_compare(pred, tar) for pred in predict]):
                 return False
         return True
 
@@ -26,6 +30,8 @@ class ICDValidator:
             return True
         if str1 + "末期" == str2 or str1 == str2 + "末期":
             return True
+        if "末期" + str1 == str2 or str1 == "末期" + str2:
+            return True
         if str1 + "病史" == str2 or str1 == str2 + "病史":
             return True
         return False
@@ -33,8 +39,8 @@ class ICDValidator:
 
 if __name__ == "__main__":
     validator = ICDValidator()
-    predict = ["肝臟轉移", "大腸直腸癌", "肺部轉移"]
+    predict = ["糖尿病", "嚴重特殊傳染性肺炎(COVID-19)", "慢性阻塞性肺病", "第五期慢性腎臟疾病"]
     predict.sort(key=lambda s: len(s), reverse=True)
     print(predict)
-    target = ["大腸直腸癌", "肺部轉移", "肝臟轉移"]
+    target = ["糖尿病", "COVID-19", "慢性阻塞性肺病", "第五期慢性腎臟病"]
     print(validator.icd_validate(predict, target))

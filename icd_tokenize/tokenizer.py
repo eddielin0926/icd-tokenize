@@ -14,7 +14,6 @@ class ICDTokenizer:
             self.trie[element] = True
 
         self.synonyms = icd.synonyms
-        print(self.synonyms)
 
         self.experimental = experimental
 
@@ -23,11 +22,18 @@ class ICDTokenizer:
         data = re.sub(r"合併(?!症)", "", data)
         data = re.sub(r"併發(?!症)", "", data)
         data = re.sub(r"無明顯外傷性死因", "", data)
+        data = re.sub(r"無外傷性死因", "", data)
         data = re.sub(r"無明顯外傷", "", data)
         data = re.sub(r"及", "", data)
         data = re.sub(r"並", "", data)
         data = re.sub(r"_", "", data)
         data = re.sub(r"\s", "", data)
+
+        data = re.sub(r"風溼", "風濕", data)
+        data = re.sub(r"濕疹", "溼疹", data)
+        data = re.sub(r"慢性老化性失智症", "慢性失智症", data)
+        data = re.sub(r"敗血休克", "敗血性休克", data)
+        data = re.sub(r"鬱血心衰竭", "鬱血性心衰竭", data)
         data = data.replace("COVID19", "COVID-19")
 
         if "行人" in data:
@@ -89,20 +95,20 @@ class ICDTokenizer:
                 return False
         return True
 
-    def _remove_synonyms(self, data: list) -> list:
+    def remove_synonyms(self, data: list) -> list:
         result = []
         for d in data:
             if d in self.synonyms:
-                result.append(self.synonyms[d])
+                if self.synonyms[d] not in result:
+                    result.append(self.synonyms[d])
             else:
                 result.append(d)
-        result = self._remove_duplicate(result)
         return result
 
-    def _remove_subset(self, data: list) -> list:
+    def remove_subset(self, data: list) -> list:
         return [e for e in data if not any([self._is_subset(e, r) for r in data])]
 
-    def _remove_duplicate(self, data: list) -> list:
+    def remove_duplicate(self, data: list) -> list:
         return list(dict.fromkeys(data))
 
     def extract_icd(self, input_str: str):
@@ -132,8 +138,9 @@ class ICDTokenizer:
                 input_str = input_str.removeprefix(prefix)
                 result.append(prefix)
 
-        result = self._remove_subset(result)
-        result = self._remove_duplicate(result)
+        result = self.remove_subset(result)
+        result = self.remove_synonyms(result)
+        result = self.remove_duplicate(result)
 
         return result
 
@@ -150,9 +157,9 @@ if __name__ == "__main__":
         "上消化道大出血",
         "心肺腎衰竭",
         "瀰漫大B細胞淋巴瘤",
-        "左股骨頸骨折、高血壓性心臟病、慢性腎臟病、攝護腺癌",
         "手術修補 4.慢性腎衰竭經短期透析治療後5.高血壓 6.糖尿病7.院內死亡經急救後恢復心跳",
-        "跌落田埂旁水溝(深約1.3米)。",
+        "嚴重特殊傳染性肺炎(新冠肺炎)併呼吸衰竭",
+        "老邁壽終",
     ]
     for string in tests:
         print(tokenizer.extract_icd(string))
