@@ -24,6 +24,7 @@ class ICDTokenizer:
         data = re.sub(r"無明顯外傷性死因", "", data)
         data = re.sub(r"無外傷性死因", "", data)
         data = re.sub(r"無明顯外傷", "", data)
+        data = re.sub(r"非新冠肺炎", "", data)
         data = re.sub(r"及", "", data)
         data = re.sub(r"並", "", data)
         data = re.sub(r"_", "", data)
@@ -34,7 +35,16 @@ class ICDTokenizer:
         data = re.sub(r"慢性老化性失智症", "慢性失智症", data)
         data = re.sub(r"敗血休克", "敗血性休克", data)
         data = re.sub(r"鬱血心衰竭", "鬱血性心衰竭", data)
+        data = re.sub(r"急性缺氧呼吸衰竭", "急性缺氧性呼吸衰竭", data)
+        data = re.sub(r"呼吸中止症", "呼吸中止症候群", data)
+        data = re.sub(r"武漢肺炎", "新冠肺炎", data)
+        data = re.sub(r"嚴重特殊傳染性疾病確診", "新冠肺炎", data)
         data = data.replace("COVID19", "COVID-19")
+
+        if data == "燒碳":
+            data = "燒炭"
+        if data == "洗腎":
+            data = "腎衰竭"
 
         if "行人" in data:
             if "機車" in data:
@@ -52,7 +62,7 @@ class ICDTokenizer:
             elif "火車" in data:
                 data = "車禍B6行人*火車"
         elif "機車騎士" in data:
-            if "小客車" in data:
+            if "小客" in data:
                 data = "車禍D1機車騎士*汽車"
             elif "汽車" in data:
                 data = "車禍D1機車騎士*汽車"
@@ -67,7 +77,7 @@ class ICDTokenizer:
             elif "自行車" in data:
                 data = "車禍D0機車騎士*腳踏車"
         elif "機車" in data:
-            if "小客車" in data or "汽車" in data:
+            if "小客" in data or "汽車" in data:
                 data = "車禍A21機車*汽車"
             elif "大貨車" in data:
                 data = "車禍D3機車騎士*大貨車"
@@ -76,7 +86,7 @@ class ICDTokenizer:
             elif data.count("機車") == 2:
                 data = "車禍A20機車"
         elif "自行車" in data or "腳踏車" in data:
-            if "小客車" in data or "汽車" in data:
+            if "小客" in data or "汽車" in data:
                 data = "車禍C2腳踏車騎士*汽車"
             elif "機車" in data:
                 data = "車禍C1腳踏車騎士*機車"
