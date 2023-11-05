@@ -26,7 +26,7 @@ def processing_file(
     tokenizer: ICDTokenizer,
     validator: ICDValidator,
     data_dir: str,
-    tmp_record_dir: str,
+    output_dir: str,
     file: str,
     output_json: bool = False,
     output_excel: bool = False,
@@ -87,20 +87,20 @@ def processing_file(
         records.append(record)
 
     # Dump error result
-    tmpdir = f"{tmp_record_dir}/{year_month}"
-    os.makedirs(f"{tmpdir}")
+    record_dir = f"{output_dir}/{year_month}"
+    os.makedirs(f"{record_dir}")
     errors = itertools.chain.from_iterable([r.get_errors() for r in records if not r.is_correct])
-    pd.DataFrame(errors).to_csv(f"{tmpdir}/{year_month}.csv", index=False)
+    pd.DataFrame(errors).to_csv(f"{record_dir}/{year_month}.csv", index=False)
 
     # Dump json result
     if output_json:
-        with open(f"{tmpdir}/{year_month}.json", "w", encoding="utf-8") as f:
+        with open(f"{record_dir}/{year_month}.json", "w", encoding="utf-8") as f:
             json_records = [e.for_json() for e in records]
             json.dump(json_records, f, ensure_ascii=False)
 
     # Dump excel result
     if output_excel:
-        with pd.ExcelWriter(f"{tmpdir}/{year_month}.xlsx", engine="xlsxwriter") as writer:
+        with pd.ExcelWriter(f"{record_dir}/{year_month}.xlsx", engine="xlsxwriter") as writer:
 
             def dump_excel(excels: list[tuple[str, str, str]], sheet_name: str):
                 index, before, after = zip(*excels)
@@ -158,13 +158,9 @@ if __name__ == "__main__":
         f":open_file_folder: create output directory: [yellow]{os.path.abspath(tmp_record_dir)}[/]"
     )
 
-    # Load ICD Dictionary
+    # Initialize ICD Tools
     icd = ICD()
-
-    # Load ICD tokenizer
     tokenizer = ICDTokenizer(icd, experimental=True)
-
-    # Load ICD validator
     validator = ICDValidator(icd)
 
     # List all files in data directory
