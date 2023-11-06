@@ -1,5 +1,4 @@
 import argparse
-import itertools
 import json
 import os
 import time
@@ -12,9 +11,8 @@ import pandas as pd
 from pandas.io.formats import excel
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn
-from rich.table import Table
 
-from icd_tokenize import ICD, ICDTokenizer, ICDValidator, Record
+from icd_tokenize import ICD, ICDTokenizer, ICDValidator, Record, Stats
 
 # Disable header style in excel
 excel.ExcelFormatter.header_style = None
@@ -89,7 +87,7 @@ def processing_file(
     # Dump error result
     record_dir = f"{output_dir}/{year_month}"
     os.makedirs(f"{record_dir}")
-    errors = itertools.chain.from_iterable([r.get_errors() for r in records if not r.is_correct])
+    errors = [error for r in records if not r.is_correct for error in r.get_errors()]
     pd.DataFrame(errors).to_csv(f"{record_dir}/{year_month}.csv", index=False)
 
     # Dump json result
@@ -116,18 +114,7 @@ def processing_file(
                 [e.for_excel() for e in records if not e.is_correct], f"{year_month}_斷詞錯誤"
             )
 
-    # Collect accuracy
-    counts = len(records)
-    corrects = [r.is_correct for r in records].count(True)  # count correct records
-    dirties = sum([r.dirty for r in records])  # count dirty records
-
-    return {
-        "name": year_month,
-        "correct": corrects,
-        "total": counts,
-        "accuracy": corrects * 100 / counts,
-        "dirty": dirties,
-    }
+    return Stats(name=year_month, records=records)
 
 
 if __name__ == "__main__":
@@ -167,9 +154,9 @@ if __name__ == "__main__":
     data_dir = "data"
     files = os.listdir(data_dir)
     files = list(filter(lambda f: f[:2] != "~$", files))  # Prevent processing temporary excel files
-    files = list(filter(lambda f: "(00000)" not in f, files))
+    files = list(filter(lambda f: "(00000)" in f, files))
 
-    stats = []  # statistical data of processing results from each files
+    stats_list: list[Stats] = []  # statistical data of processing results from each files
     with Progress(
         "[progress.description]{task.description}",
         BarColumn(),
@@ -214,47 +201,19 @@ if __name__ == "__main__":
 
                 # raise any errors:
                 for future in futures:
-                    stats.append(future.result())
+                    stats_list.append(future.result())
 
     # Dump process information
-    total_correct = sum([s["correct"] for s in stats])  # count correct records
-    total_count = sum([s["total"] for s in stats])  # count total records
-    total_accuracy = total_correct * 100 / total_count  # calculate total accuracy
-    total_dirty = sum([s["dirty"] for s in stats])  # count dirty records
-    total_stats = stats + [
-        {
-            "name": "total",
-            "correct": total_correct,
-            "total": total_count,
-            "accuracy": total_accuracy,
-            "dirty": total_dirty,
-        }
-    ]
-    df_stats = pd.DataFrame(total_stats, index=None)
+    total_stats = Stats.sum(stats_list)
+    df_stats = Stats.dataframe(stats_list, total=total_stats)
     df_stats.to_csv(f"{tmp_record_dir}/result.csv", index=False)
 
     # Display result Table of each file
-    table = Table(title="Result", show_footer=True)
-    table.add_column("File", footer="Total")
-    table.add_column("Correct", footer=str(total_correct))
-    table.add_column("Total", footer=str(total_count))
-    table.add_column("Accuracy", footer=f"{total_accuracy:.2f}%")
-    table.add_column("Dirty", footer=str(total_dirty))
-    for s in stats:
-        table.add_row(
-            s["name"],
-            str(s["correct"]),
-            str(s["total"]),
-            f"{s['accuracy']:.2f}%",
-            str(s["dirty"]),
-        )
-    console.print(table)
+    console.print(Stats.table(stats_list, total=total_stats, title="Result"))
 
     # Finish process timing
     end_time = time.time()
     elapsed_time = end_time - start_time
 
     # Print final result
-    console.print(f":white_check_mark: total accuracy:\t[green bold]{round(total_accuracy, 2)}%[/]")
-    console.print(f":floppy_disk: total data:\t\t[green bold]{total_count}[/]")
     console.print(f":hourglass: elapsed time:\t[green bold]{round(elapsed_time, 3)}s[/]")
