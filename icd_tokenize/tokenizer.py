@@ -44,6 +44,7 @@ class ICDTokenizer:
         data = re.sub(r"武漢肺炎", "新冠肺炎", data)
         data = re.sub(r"嚴重特殊傳染性疾病確診", "新冠肺炎", data)
         data = re.sub(r"乳腺惡性腫瘤", "乳腺癌", data)
+        data = re.sub(r"大出血", "出血", data)
 
         data = data.replace("COVID19", "COVID-19")
 

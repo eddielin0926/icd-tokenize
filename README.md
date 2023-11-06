@@ -16,7 +16,7 @@ poetry install
 ## Start
 
 ```sh
-poetry python run main.py
+poetry run python main.py
 ```
 
 ## Development

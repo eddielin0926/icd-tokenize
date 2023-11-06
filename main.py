@@ -75,7 +75,7 @@ def processing_file(
 
             # Verify result
             record.corrects[catalog] = validator.icd_validate(results, targets)
-            record.exact[catalog] = set(results) == set(targets)
+            record.identical[catalog] = set(results) == set(targets)
 
             # Assign input and result to record
             record.inputs[catalog] = inputs

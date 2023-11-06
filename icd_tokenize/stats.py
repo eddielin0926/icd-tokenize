@@ -24,9 +24,9 @@ class Stats:
         return [r.is_correct for r in self.records].count(True)
 
     @property
-    def exactness(self):
-        """Return the number of exact records"""
-        return [r.is_exact for r in self.records].count(True)
+    def identical(self):
+        """Return the number of identical records"""
+        return [r.is_identical for r in self.records].count(True)
 
     @property
     def correct_rate(self):
@@ -34,9 +34,9 @@ class Stats:
         return self.correct / self.total
 
     @property
-    def exact_rate(self):
-        """Return the exact rate"""
-        return self.exactness / self.total
+    def identical_rate(self):
+        """Return the identical rate"""
+        return self.identical / self.total
 
     @property
     def dirty(self):
@@ -47,10 +47,10 @@ class Stats:
     def simple(self):
         return {
             "name": self.name,
-            "exact": self.exactness,
+            "identical": self.identical,
             "correct": self.correct,
             "total": self.total,
-            "exact_rate": self.exact_rate,
+            "identical_rate": self.identical_rate,
             "correct_rate": self.correct_rate,
             "dirty": self.dirty,
         }
@@ -75,11 +75,11 @@ class Stats:
             total = Stats.sum(stats)
         total = total.simple
         table.add_column("File", footer="Total", justify="center")
-        table.add_column("Exact", footer=str(total["exact"]), justify="center")
+        table.add_column("Identical", footer=str(total["identical"]), justify="center")
         table.add_column("Correct", footer=str(total["correct"]), justify="center")
         table.add_column("Total", footer=str(total["total"]), justify="center")
         table.add_column(
-            "Exact Rate", footer=f"{round(total['exact_rate'] * 100, 2)}%", justify="center"
+            "Identical Rate", footer=f"{round(total['identical_rate'] * 100, 2)}%", justify="center"
         )
         table.add_column(
             "Correct Rate", footer=f"{round(total['correct_rate'] * 100, 2)}%", justify="center"
@@ -88,10 +88,10 @@ class Stats:
         for s in stats:
             table.add_row(
                 s.simple["name"],
-                str(s.simple["exact"]),
+                str(s.simple["identical"]),
                 str(s.simple["correct"]),
                 str(s.simple["total"]),
-                f"{round(s.simple['exact_rate'] * 100, 2)}%",
+                f"{round(s.simple['identical_rate'] * 100, 2)}%",
                 f"{round(s.simple['correct_rate'] * 100, 2)}%",
                 str(s.simple["dirty"]),
             )

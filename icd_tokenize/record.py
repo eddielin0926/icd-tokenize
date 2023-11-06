@@ -11,7 +11,7 @@ class Record:
     month: int
     serial: int
     number: int
-    exact: dict[str, bool] = field(default_factory=dict)
+    identical: dict[str, bool] = field(default_factory=dict)
     corrects: dict[str, bool] = field(default_factory=dict)
     inputs: dict[str, list[str]] = field(default_factory=dict)
     results: dict[str, list[str]] = field(default_factory=dict)
@@ -30,9 +30,9 @@ class Record:
         return all(self.corrects.values())
 
     @property
-    def is_exact(self):
-        """Return True if all results are exactly same with targets"""
-        return all(self.exact.values())
+    def is_identical(self):
+        """Return True if all results are identical to all targets"""
+        return all(self.identical.values())
 
     @property
     def dirty(self):
