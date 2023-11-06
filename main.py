@@ -55,15 +55,33 @@ def processing_file(
         record = Record(
             year=year, month=month, serial=int(df["流水號"][idx]), number=int(df["NO"][idx])
         )
+        # Collect input and target
         for catalog in ["甲", "乙", "丙", "丁", "其他"]:
-            inputs = []
-            targets = []
+            record.inputs[catalog] = []
+            record.targets[catalog] = []
+            for tag in ["", "2", "3", "4"]:
+                data = row[f"{catalog}{tag}"]
+                record.inputs[catalog].append(data)
+                record.targets[catalog].append(df_target[f"{catalog}{tag}"][idx])
+
+        # Shift inputs if there is empty input
+        inputs_list = []
+        for catalog in ["甲", "乙", "丙", "丁"]:
+            if any(i != "" for i in record.inputs[catalog]):
+                inputs_list.append(record.inputs[catalog])
+        while len(inputs_list) < 4:
+            inputs_list.append(["", "", "", ""])
+        for i, catalog in enumerate(["甲", "乙", "丙", "丁"]):
+            record.inputs[catalog] = inputs_list[i]
+
+        # Tokenize input
+        for catalog in ["甲", "乙", "丙", "丁", "其他"]:
+            inputs = record.inputs[catalog]
+            targets = record.targets[catalog]
             results = []
 
-            for i in ["", "2", "3", "4"]:
-                data = row[f"{catalog}{i}"]
-                inputs.append(data)
-                targets.append(df_target[f"{catalog}{i}"][idx])
+            for i in range(4):
+                data = inputs[i]
                 results.extend(tokenizer.extract_icd(data))
 
             # Extend array length to 4
@@ -77,10 +95,7 @@ def processing_file(
             record.corrects[catalog] = validator.icd_validate(results, targets)
             record.identical[catalog] = set(results) == set(targets)
 
-            # Assign input and result to record
-            record.inputs[catalog] = inputs
             record.results[catalog] = results
-            record.targets[catalog] = targets
 
         # Collect result
         records.append(record)
