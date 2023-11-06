@@ -167,7 +167,7 @@ if __name__ == "__main__":
     data_dir = "data"
     files = os.listdir(data_dir)
     files = list(filter(lambda f: f[:2] != "~$", files))  # Prevent processing temporary excel files
-    # files = list(filter(lambda f: "(11104)" in f, files))  # Delete this line to process all files
+    files = list(filter(lambda f: "(00000)" not in f, files))
 
     stats = []  # statistical data of processing results from each files
     with Progress(

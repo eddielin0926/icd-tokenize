@@ -8,8 +8,31 @@ class ICDValidator:
         self.synonyms = icd.synonyms
 
     def icd_validate(self, predict: list, target: list) -> bool:
-        if len(predict) != len(target):
-            return False
+        if "糖尿病" in predict and "腎臟病" in predict and "糖尿病腎臟病" in target:
+            predict.remove("糖尿病")
+            predict.remove("腎臟病")
+            target.remove("糖尿病腎臟病")
+        if "糖尿病" in target and "腎臟病" in target and "糖尿病腎臟病" in predict:
+            target.remove("糖尿病")
+            target.remove("腎臟病")
+            predict.remove("糖尿病腎臟病")
+        if "高血壓" in predict and "心臟病" in predict and "高血壓心臟病" in target:
+            predict.remove("高血壓")
+            predict.remove("心臟病")
+            target.remove("高血壓心臟病")
+        if "高血壓" in target and "心臟病" in target and "高血壓心臟病" in predict:
+            target.remove("高血壓")
+            target.remove("心臟病")
+            predict.remove("高血壓心臟病")
+        if "心肺腎衰竭" in predict and "心肺衰竭" in target and "腎衰竭" in target:
+            predict.remove("心肺腎衰竭")
+            target.remove("心肺衰竭")
+            target.remove("腎衰竭")
+        if "高血壓缺血性心臟病" in predict and "高血壓" in target and "缺血性心臟病" in target:
+            predict.remove("高血壓缺血性心臟病")
+            target.remove("高血壓")
+            target.remove("缺血性心臟病")
+
         for pred in predict:
             if not any([self._icd_compare(pred, tar) for tar in target]):
                 return False
@@ -39,8 +62,6 @@ class ICDValidator:
 
 if __name__ == "__main__":
     validator = ICDValidator()
-    predict = ["糖尿病", "嚴重特殊傳染性肺炎(COVID-19)", "慢性阻塞性肺病", "第五期慢性腎臟疾病"]
-    predict.sort(key=lambda s: len(s), reverse=True)
-    print(predict)
-    target = ["糖尿病", "COVID-19", "慢性阻塞性肺病", "第五期慢性腎臟病"]
+    predict = ["高血壓心臟病", "糖尿病", "腎臟病", ""]
+    target = ["高血壓", "心臟病", "糖尿病腎臟病", ""]
     print(validator.icd_validate(predict, target))

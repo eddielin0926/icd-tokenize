@@ -25,6 +25,7 @@ class ICDTokenizer:
         data = re.sub(r"無外傷性死因", "", data)
         data = re.sub(r"無明顯外傷", "", data)
         data = re.sub(r"非新冠肺炎", "", data)
+        data = re.sub(r"未明", "", data)
         data = re.sub(r"及", "", data)
         data = re.sub(r"並", "", data)
         data = re.sub(r"_", "", data)
@@ -37,8 +38,13 @@ class ICDTokenizer:
         data = re.sub(r"鬱血心衰竭", "鬱血性心衰竭", data)
         data = re.sub(r"急性缺氧呼吸衰竭", "急性缺氧性呼吸衰竭", data)
         data = re.sub(r"呼吸中止症", "呼吸中止症候群", data)
+        data = re.sub(r"免疫低下", "免疫力低下", data)
+        data = re.sub(r"瀰漫大B細胞淋巴瘤", "瀰漫性大B細胞淋巴瘤", data)
+
         data = re.sub(r"武漢肺炎", "新冠肺炎", data)
         data = re.sub(r"嚴重特殊傳染性疾病確診", "新冠肺炎", data)
+        data = re.sub(r"乳腺惡性腫瘤", "乳腺癌", data)
+
         data = data.replace("COVID19", "COVID-19")
 
         if data == "燒碳":
