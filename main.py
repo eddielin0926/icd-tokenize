@@ -75,6 +75,7 @@ def processing_file(
 
             # Verify result
             record.corrects[catalog] = validator.icd_validate(results, targets)
+            record.exact[catalog] = set(results) == set(targets)
 
             # Assign input and result to record
             record.inputs[catalog] = inputs
@@ -154,7 +155,7 @@ if __name__ == "__main__":
     data_dir = "data"
     files = os.listdir(data_dir)
     files = list(filter(lambda f: f[:2] != "~$", files))  # Prevent processing temporary excel files
-    files = list(filter(lambda f: "(00000)" in f, files))
+    files = list(filter(lambda f: "(00000)" not in f, files))
 
     stats_list: list[Stats] = []  # statistical data of processing results from each files
     with Progress(
