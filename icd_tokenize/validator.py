@@ -24,29 +24,51 @@ class ICDValidator:
     def validate(self, predict: list, target: list) -> bool:
         combine_list = [
             ["高血壓", "心臟病", "高血壓心臟病"],
+            ["高血壓病史", "心臟病", "高血壓心臟病"],
+            ["高血壓", "心血管疾病", "高血壓心血管疾病"],
+            ["高血壓心臟病", "衰竭", "高血壓心臟病衰竭"],
+            ["高血壓心臟病", "心衰竭", "高血壓心臟病衰竭"],
+            ["高血壓心臟病", "心臟衰竭", "高血壓心臟病衰竭"],
             ["糖尿病", "腎臟病", "糖尿病腎臟病"],
             ["糖尿病", "腎衰竭", "糖尿病腎衰竭"],
             ["高血壓", "缺血性心臟病", "高血壓缺血性心臟病"],
             ["高血壓", "心臟衰竭", "高血壓心臟衰竭"],
+            ["高血壓心臟病", "心臟衰竭", "高血壓心臟病衰竭"],
             ["心肺衰竭", "腎衰竭", "心肺腎衰竭"],
             ["敗血症", "休克", "敗血症休克"],
+            ["乳癌", "轉移", "乳癌轉移"],
+            ["大腸癌", "轉移", "大腸癌轉移"],
         ]
-        for combine in combine_list:
-            if combine[0] in predict and combine[1] in predict and combine[2] in target:
-                predict.remove(combine[0])
-                predict.remove(combine[1])
-                predict.append(combine[2])
-            elif combine[0] in target and combine[1] in target and combine[2] in predict:
-                predict.append(combine[0])
-                predict.append(combine[1])
-                predict.remove(combine[2])
-
         for pred in predict:
             if not any([self._icd_compare(pred, tar) for tar in target]):
-                return False
+                special_case = False
+                for c in combine_list:
+                    if pred == c[0] and c[1] in predict and c[2] in target:
+                        special_case = True
+                        break
+                    elif c[0] in predict and pred == c[1] and c[2] in target:
+                        special_case = True
+                        break
+                    elif pred == c[2] and c[0] in target and c[1] in target:
+                        special_case = True
+                        break
+                if not special_case:
+                    return False
         for tar in target:
             if not any([self._icd_compare(pred, tar) for pred in predict]):
-                return False
+                special_case = False
+                for c in combine_list:
+                    if tar == c[0] and c[1] in target and c[2] in predict:
+                        special_case = True
+                        break
+                    elif c[0] in target and tar == c[1] and c[2] in predict:
+                        special_case = True
+                        break
+                    elif tar == c[2] and c[0] in predict and c[1] in predict:
+                        special_case = True
+                        break
+                if not special_case:
+                    return False
         return True
 
     def _icd_compare(self, str1: str, str2: str) -> bool:

@@ -32,7 +32,6 @@ class ICDTokenizer:
         data = re.sub(r"無明顯外傷", "", data)
         data = re.sub(r"非新冠肺炎", "", data)
         data = re.sub(r"未明", "", data)
-        data = re.sub(r"到院", "", data)
         data = re.sub(r"及", "", data)
         data = re.sub(r"並", "", data)
         data = re.sub(r"_", "", data)
@@ -46,6 +45,8 @@ class ICDTokenizer:
         data = re.sub(r"肺部疾患", "肺部疾病", data)
         data = re.sub(r"腦血管疾患", "腦血管疾病", data)
         data = re.sub(r"末期腎疾患", "末期腎疾病", data)
+        data = re.sub(r"排尿障礙", "排尿困難", data)
+        data = re.sub(r"慢性老化性失智症", "慢性老年失智症", data)
 
         data = re.sub(r"慢性老化性失智症", "慢性失智症", data)
         data = re.sub(r"敗血休克", "敗血性休克", data)
@@ -54,11 +55,13 @@ class ICDTokenizer:
         data = re.sub(r"呼吸中止症", "呼吸中止症候群", data)
         data = re.sub(r"免疫低下", "免疫力低下", data)
         data = re.sub(r"瀰漫大B細胞淋巴瘤", "瀰漫性大B細胞淋巴瘤", data)
+        data = re.sub(r"反覆肺炎", "反覆性肺炎", data)
 
         data = re.sub(r"武漢肺炎", "新冠肺炎", data)
         data = re.sub(r"嚴重特殊傳染性疾病確診", "新冠肺炎", data)
         data = re.sub(r"乳腺惡性腫瘤", "乳腺癌", data)
         data = re.sub(r"大出血", "出血", data)
+        data = re.sub(r"本態性\(原發性\)高血壓", "本態性高血壓", data)
 
         data = data.replace("COVID19", "COVID-19")
 
@@ -130,8 +133,13 @@ class ICDTokenizer:
         result = []
         for d in data:
             if d in self.synonyms:
-                if self.synonyms[d] not in result:
-                    result.append(self.synonyms[d])
+                contain = False
+                for r in result:
+                    if r in self.synonyms and self.synonyms[d] == self.synonyms[r]:
+                        contain = True
+                        break
+                if not contain:
+                    result.append(d)
             else:
                 result.append(d)
         return result
@@ -155,20 +163,23 @@ class ICDTokenizer:
 
         data = Data()
         for catalog in Data.KEYS:
+            result = []
             for i in range(4):
-                data[catalog].extend(self.extract(inputs[catalog][i]))
+                result.extend(self.extract(inputs[catalog][i]))
 
             # Extend array length to 4
-            while len(data[catalog]) < 4:
-                data[catalog].append("")
+            while len(result) < 4:
+                result.append("")
 
             # Truncate exceed result
-            data[catalog] = data[catalog][:4]
+            result = result[:4]
+
+            data[catalog] = result
         return data
 
     def extract(self, input_str: str):
         if input_str == "":
-            return [""]
+            return []
         input_str = self._pre_process(input_str)
         if self.trie.has_key(input_str):
             return [input_str]
@@ -209,9 +220,13 @@ if __name__ == "__main__":
     df["input"] = df["input"].apply(ast.literal_eval)
     df["answer"] = df["answer"].apply(ast.literal_eval)
 
+    max_state = 1
+
     tables = []
-    for i in range(4):
-        table = Table(title=f"State {i + 1}")
+    for i in range(5):
+        if i >= max_state:
+            break
+        table = Table(title=f"State {i}")
         table.add_column()
         table.add_column("Input")
         table.add_column("Manual")
@@ -220,18 +235,20 @@ if __name__ == "__main__":
 
     for i, row in df.iterrows():
         state = row["state"]
-        toks = tokenizer.extract_icd(row["input"][0])
+        if state >= max_state:
+            continue
+        toks = tokenizer.extract(row["input"][0])
 
         if set(row["answer"]) == set(toks):
             status = ":white_check_mark:"
-        elif validator.icd_validate(toks, row["answer"]):
+        elif validator.validate(toks, row["answer"]):
             status = ":o:"
         else:
             status = ":x:"
         inp = "、".join(row["input"])
         ans = "、".join(row["answer"])
         tok = "、".join(toks)
-        tables[state - 1].add_row(status, inp, ans, tok)
+        tables[state].add_row(status, inp, ans, tok)
 
     console = Console()
     for table in tables:
