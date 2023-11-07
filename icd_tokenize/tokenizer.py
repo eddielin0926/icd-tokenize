@@ -155,11 +155,6 @@ class ICDTokenizer:
                         current.append(i_split[1])
                         if len(i_split) > 0:
                             next.append(i_split[0])
-                    elif "致" in i:
-                        i_split = i.split("致", 1)
-                        current.append(i_split[1])
-                        if len(i_split) > 0:
-                            next.append(i_split[0])
                     elif "引發" in i:
                         i_split = i.split("引發", 1)
                         current.append(i_split[1])
