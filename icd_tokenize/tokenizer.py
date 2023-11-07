@@ -1,8 +1,13 @@
+import ast
 import re
 
+import pandas as pd
 import pygtrie
+from rich.console import Console
+from rich.table import Table
 
 from icd_tokenize import ICD
+from icd_tokenize.validator import ICDValidator
 
 
 class ICDTokenizer:
@@ -26,6 +31,7 @@ class ICDTokenizer:
         data = re.sub(r"無明顯外傷", "", data)
         data = re.sub(r"非新冠肺炎", "", data)
         data = re.sub(r"未明", "", data)
+        data = re.sub(r"到院", "", data)
         data = re.sub(r"及", "", data)
         data = re.sub(r"並", "", data)
         data = re.sub(r"_", "", data)
@@ -33,6 +39,13 @@ class ICDTokenizer:
 
         data = re.sub(r"風溼", "風濕", data)
         data = re.sub(r"濕疹", "溼疹", data)
+        data = re.sub(r"墬落", "墜落", data)
+
+        data = re.sub(r"心血管疾患", "心血管疾病", data)
+        data = re.sub(r"肺部疾患", "肺部疾病", data)
+        data = re.sub(r"腦血管疾患", "腦血管疾病", data)
+        data = re.sub(r"末期腎疾患", "末期腎疾病", data)
+
         data = re.sub(r"慢性老化性失智症", "慢性失智症", data)
         data = re.sub(r"敗血休克", "敗血性休克", data)
         data = re.sub(r"鬱血心衰竭", "鬱血性心衰竭", data)
@@ -163,20 +176,38 @@ class ICDTokenizer:
 
 
 if __name__ == "__main__":
-    tokenizer = ICDTokenizer(experimental=True)
-    tests = [
-        "大腸直腸癌伴有肺部、肝臟轉移",
-        "女性右側乳房未明示部位惡性腫瘤",
-        "上葉之左側支氣管或肺惡性腫瘤",
-        "右上肺葉惡性腫瘤",
-        "子宮肌層肉瘤末期",
-        "乳腺惡性腫瘤",
-        "上消化道大出血",
-        "心肺腎衰竭",
-        "瀰漫大B細胞淋巴瘤",
-        "手術修補 4.慢性腎衰竭經短期透析治療後5.高血壓 6.糖尿病7.院內死亡經急救後恢復心跳",
-        "嚴重特殊傳染性肺炎(新冠肺炎)併呼吸衰竭",
-        "老邁壽終",
-    ]
-    for string in tests:
-        print(tokenizer.extract_icd(string))
+    icd = ICD()
+    tokenizer = ICDTokenizer(icd=icd, experimental=True)
+    validator = ICDValidator(icd=icd)
+
+    df = pd.read_csv("states.csv", encoding="utf8")
+    df["input"] = df["input"].apply(ast.literal_eval)
+    df["answer"] = df["answer"].apply(ast.literal_eval)
+
+    tables = []
+    for i in range(4):
+        table = Table(title=f"State {i + 1}")
+        table.add_column()
+        table.add_column("Input")
+        table.add_column("Manual")
+        table.add_column("Auto")
+        tables.append(table)
+
+    for i, row in df.iterrows():
+        state = row["state"]
+        toks = tokenizer.extract_icd(row["input"][0])
+
+        if set(row["answer"]) == set(toks):
+            status = ":white_check_mark:"
+        elif validator.icd_validate(toks, row["answer"]):
+            status = ":o:"
+        else:
+            status = ":x:"
+        inp = "、".join(row["input"])
+        ans = "、".join(row["answer"])
+        tok = "、".join(toks)
+        tables[state - 1].add_row(status, inp, ans, tok)
+
+    console = Console()
+    for table in tables:
+        console.print(table)

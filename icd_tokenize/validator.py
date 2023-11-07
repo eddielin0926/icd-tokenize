@@ -8,30 +8,24 @@ class ICDValidator:
         self.synonyms = icd.synonyms
 
     def icd_validate(self, predict: list, target: list) -> bool:
-        if "糖尿病" in predict and "腎臟病" in predict and "糖尿病腎臟病" in target:
-            predict.remove("糖尿病")
-            predict.remove("腎臟病")
-            target.remove("糖尿病腎臟病")
-        if "糖尿病" in target and "腎臟病" in target and "糖尿病腎臟病" in predict:
-            target.remove("糖尿病")
-            target.remove("腎臟病")
-            predict.remove("糖尿病腎臟病")
-        if "高血壓" in predict and "心臟病" in predict and "高血壓心臟病" in target:
-            predict.remove("高血壓")
-            predict.remove("心臟病")
-            target.remove("高血壓心臟病")
-        if "高血壓" in target and "心臟病" in target and "高血壓心臟病" in predict:
-            target.remove("高血壓")
-            target.remove("心臟病")
-            predict.remove("高血壓心臟病")
-        if "心肺腎衰竭" in predict and "心肺衰竭" in target and "腎衰竭" in target:
-            predict.remove("心肺腎衰竭")
-            target.remove("心肺衰竭")
-            target.remove("腎衰竭")
-        if "高血壓缺血性心臟病" in predict and "高血壓" in target and "缺血性心臟病" in target:
-            predict.remove("高血壓缺血性心臟病")
-            target.remove("高血壓")
-            target.remove("缺血性心臟病")
+        combine_list = [
+            ["高血壓", "心臟病", "高血壓心臟病"],
+            ["糖尿病", "腎臟病", "糖尿病腎臟病"],
+            ["糖尿病", "腎衰竭", "糖尿病腎衰竭"],
+            ["高血壓", "缺血性心臟病", "高血壓缺血性心臟病"],
+            ["高血壓", "心臟衰竭", "高血壓心臟衰竭"],
+            ["心肺衰竭", "腎衰竭", "心肺腎衰竭"],
+            ["敗血症", "休克", "敗血症休克"],
+        ]
+        for combine in combine_list:
+            if combine[0] in predict and combine[1] in predict and combine[2] in target:
+                predict.remove(combine[0])
+                predict.remove(combine[1])
+                predict.append(combine[2])
+            elif combine[0] in target and combine[1] in target and combine[2] in predict:
+                predict.append(combine[0])
+                predict.append(combine[1])
+                predict.remove(combine[2])
 
         for pred in predict:
             if not any([self._icd_compare(pred, tar) for tar in target]):
