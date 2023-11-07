@@ -1,5 +1,8 @@
 from dataclasses import dataclass, field
 
+from icd_tokenize.data import Data
+from icd_tokenize.status import Status
+
 
 @dataclass
 class Record:
@@ -11,18 +14,11 @@ class Record:
     month: int
     serial: int
     number: int
-    identical: dict[str, bool] = field(default_factory=dict)
-    corrects: dict[str, bool] = field(default_factory=dict)
-    inputs: dict[str, list[str]] = field(default_factory=dict)
-    results: dict[str, list[str]] = field(default_factory=dict)
-    targets: dict[str, list[str]] = field(default_factory=dict)
-    keys = {
-        "甲": "CA",
-        "乙": "CB",
-        "丙": "CC",
-        "丁": "CD",
-        "其他": "CE",
-    }
+    identical: Status = field(default_factory=dict)
+    corrects: Status = field(default_factory=dict)
+    inputs: Data = field(default_factory=lambda: Data())
+    results: Data = field(default_factory=lambda: Data())
+    targets: Data = field(default_factory=lambda: Data())
 
     @property
     def is_correct(self):
@@ -51,11 +47,11 @@ class Record:
             "死因自動流水號": str(self.serial).zfill(6),
         }
 
-        for catalog in ["甲", "乙", "丙", "丁", "其他"]:
+        for catalog, code in enumerate(Data.KEYS, Data.CODES):
             if len(self.results[catalog]) < 4:
                 self.results[catalog] += ["" for _ in range(4 - len(self.results[catalog]))]
             for i in range(4):
-                data[f"{self.keys[catalog]}{i + 1}"] = self.results[catalog][i]
+                data[f"{code}{i + 1}"] = self.results[catalog][i]
 
         return data
 

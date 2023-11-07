@@ -1,4 +1,6 @@
+from icd_tokenize.data import Data
 from icd_tokenize.icd import ICD
+from icd_tokenize.status import Status
 
 
 class ICDValidator:
@@ -7,7 +9,19 @@ class ICDValidator:
             icd = ICD()
         self.synonyms = icd.synonyms
 
-    def icd_validate(self, predict: list, target: list) -> bool:
+    def identical_icd(self, predicts: Data, targets: Data) -> Status:
+        data = Status()
+        for catalog in Data.KEYS:
+            data[catalog] = set(predicts[catalog]) == set(targets[catalog])
+        return data
+
+    def validate_icd(self, predicts: Data, targets: Data) -> Status:
+        data = Status()
+        for catalog in Data.KEYS:
+            data[catalog] = self.validate(predicts[catalog], targets[catalog])
+        return data
+
+    def validate(self, predict: list, target: list) -> bool:
         combine_list = [
             ["高血壓", "心臟病", "高血壓心臟病"],
             ["糖尿病", "腎臟病", "糖尿病腎臟病"],

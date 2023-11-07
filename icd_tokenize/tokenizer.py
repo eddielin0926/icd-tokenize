@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from icd_tokenize import ICD
+from icd_tokenize.data import Data
 from icd_tokenize.validator import ICDValidator
 
 
@@ -141,7 +142,31 @@ class ICDTokenizer:
     def remove_duplicate(self, data: list) -> list:
         return list(dict.fromkeys(data))
 
-    def extract_icd(self, input_str: str):
+    def extract_icd(self, inputs: Data):
+        # Shift inputs if there is empty input
+        inputs_list = []
+        for catalog in ["甲", "乙", "丙", "丁"]:
+            if any(i != "" for i in inputs[catalog]):
+                inputs_list.append(inputs[catalog])
+        while len(inputs_list) < 4:
+            inputs_list.append(["", "", "", ""])
+        for i, catalog in enumerate(["甲", "乙", "丙", "丁"]):
+            inputs[catalog] = inputs_list[i]
+
+        data = Data()
+        for catalog in Data.KEYS:
+            for i in range(4):
+                data[catalog].extend(self.extract(inputs[catalog][i]))
+
+            # Extend array length to 4
+            while len(data[catalog]) < 4:
+                data[catalog].append("")
+
+            # Truncate exceed result
+            data[catalog] = data[catalog][:4]
+        return data
+
+    def extract(self, input_str: str):
         if input_str == "":
             return [""]
         input_str = self._pre_process(input_str)

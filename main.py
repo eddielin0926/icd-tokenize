@@ -64,38 +64,9 @@ def processing_file(
                 record.inputs[catalog].append(data)
                 record.targets[catalog].append(df_target[f"{catalog}{tag}"][idx])
 
-        # Shift inputs if there is empty input
-        inputs_list = []
-        for catalog in ["甲", "乙", "丙", "丁"]:
-            if any(i != "" for i in record.inputs[catalog]):
-                inputs_list.append(record.inputs[catalog])
-        while len(inputs_list) < 4:
-            inputs_list.append(["", "", "", ""])
-        for i, catalog in enumerate(["甲", "乙", "丙", "丁"]):
-            record.inputs[catalog] = inputs_list[i]
-
-        # Tokenize input
-        for catalog in ["甲", "乙", "丙", "丁", "其他"]:
-            inputs = record.inputs[catalog]
-            targets = record.targets[catalog]
-            results = []
-
-            for i in range(4):
-                data = inputs[i]
-                results.extend(tokenizer.extract_icd(data))
-
-            # Extend array length to 4
-            while len(results) < 4:
-                results.append("")
-
-            # Truncate exceed result
-            results = results[:4]
-
-            # Verify result
-            record.corrects[catalog] = validator.icd_validate(results, targets)
-            record.identical[catalog] = set(results) == set(targets)
-
-            record.results[catalog] = results
+        record.results = tokenizer.extract_icd(record.inputs)
+        record.corrects = validator.validate_icd(record.results, record.targets)
+        record.identical = validator.identical_icd(record.results, record.targets)
 
         # Collect result
         records.append(record)
