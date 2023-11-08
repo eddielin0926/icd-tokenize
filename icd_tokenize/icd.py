@@ -59,8 +59,12 @@ class ICD:
             f'Write into file:\t [cyan bold]{os.path.join(output_dir, "original-icd.csv")}[/]'
         )
 
+        covid_df = pd.read_csv(os.path.join(output_dir, "covid.csv"))
+        covid_df["ICD1"] = ["J128"] * len(covid_df)
+
         syn_df = icd_df[["ICD1", "diagnosis"]]
         syn_df = syn_df[syn_df.duplicated(subset=["ICD1"], keep=False)]
+        syn_df = pd.concat([syn_df, covid_df], ignore_index=True)
         syn_df = syn_df.sort_values(["ICD1"])
         syn_df.to_csv(os.path.join(output_dir, "synonym.csv"), index=False)
         console.print(f'Write into file:\t [cyan bold]{os.path.join(output_dir, "synonym.csv")}[/]')

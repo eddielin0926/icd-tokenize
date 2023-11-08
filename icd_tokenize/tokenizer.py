@@ -133,14 +133,8 @@ class ICDTokenizer:
             data.remove("自然死亡")
 
         covid = {
-            "COVID": "COVID 19",
             "COVID-19": "COVID 19",
-            "COVID-19病毒感染": "COVID 19",
-            "COVID-19肺炎": "COVID 19",
-            "COVID肺炎": "COVID 19",
-            "Covid19": "COVID 19",
-            "嚴重特殊性傳染性肺炎": "嚴重特殊傳染性肺炎(COVID-19)",
-            "新冠病毒感染肺炎": "嚴重特殊傳染性肺炎(COVID-19)",
+            "嚴重特殊傳染性肺炎": "嚴重特殊傳染性肺炎(COVID-19)",
         }
 
         kidney = {
@@ -188,6 +182,16 @@ class ICDTokenizer:
                 result.append(check[d])
             else:
                 result.append(d)
+
+        has_covid = False
+        for r in result:
+            if r in self.synonyms and self.synonyms[r] == "J128":
+                has_covid = True
+                break
+        if has_covid:
+            if "感染" in result:
+                result.remove("感染")
+
         return result
 
     def _is_subset(self, str1: str, str2: str) -> bool:
@@ -319,3 +323,4 @@ if __name__ == "__main__":
     console = Console()
     for table in tables:
         console.print(table)
+        break
