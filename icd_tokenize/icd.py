@@ -8,6 +8,8 @@ import pygtrie
 from rich.console import Console
 from rich.progress import track
 
+from .synonym import Synonym
+
 
 class ICD:
     def __init__(self, dir_path: str = None) -> None:
@@ -20,14 +22,7 @@ class ICD:
         self.diagnosis = df["diagnosis"].to_list()
 
         # synonyms
-        self.synonyms = {}
-        synonyms_file = os.path.join(dir_path, "synonyms.txt")
-        with open(synonyms_file, "r", encoding="utf-8") as f:
-            for line in f.readlines():
-                line = line.replace("\n", "")
-                syms = line.split(",")
-                for sym in syms:
-                    self.synonyms[sym] = syms[0]
+        self.synonyms = Synonym()
 
 
 def generate_icd(data_dir: str, icd_file: str = None):

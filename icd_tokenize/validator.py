@@ -38,6 +38,9 @@ class ICDValidator:
             ["敗血症", "休克", "敗血症休克"],
             ["乳癌", "轉移", "乳癌轉移"],
             ["大腸癌", "轉移", "大腸癌轉移"],
+            ["癌症末期", "惡病質", "癌症末期惡病質"],
+            ["胰臟癌", "多處轉移", "胰臟癌多處轉移"],
+            ["糖尿病", "慢性腎病變", "糖尿病慢性腎病變"],
         ]
         for pred in predict:
             if not any([self._icd_compare(pred, tar) for tar in target]):
@@ -77,6 +80,10 @@ class ICDValidator:
             return True
         if str1 in self.synonyms and str2 in self.synonyms:
             return self.synonyms[str1] == self.synonyms[str2]
+        if str1 + "死亡" == str2 or str1 == str2 + "死亡":
+            return True
+        if str1 + "復發" == str2 or str1 == str2 + "復發":
+            return True
         if str1 + "疾病" == str2 or str1 == str2 + "疾病":
             return True
         if str1 + "術後" == str2 or str1 == str2 + "術後":

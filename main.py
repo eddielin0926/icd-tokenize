@@ -64,7 +64,9 @@ def processing_file(
                 record.inputs[catalog].append(data)
                 record.targets[catalog].append(df_target[f"{catalog}{tag}"][idx])
 
-        record.results = tokenizer.extract_icd(record.inputs)
+        record.results = tokenizer.extract_icd(
+            record.inputs, after_11206=(year >= 112 and month >= 6)
+        )
         record.corrects = validator.validate_icd(record.results, record.targets)
         record.identical = validator.identical_icd(record.results, record.targets)
 

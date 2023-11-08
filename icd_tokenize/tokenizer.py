@@ -40,6 +40,9 @@ class ICDTokenizer:
         data = re.sub(r"風溼", "風濕", data)
         data = re.sub(r"濕疹", "溼疹", data)
         data = re.sub(r"墬落", "墜落", data)
+        data = re.sub(r"吸菸", "吸煙", data)
+        data = re.sub(r"膿傷", "膿瘍", data)
+        data = re.sub(r"哽塞", "梗塞", data)
 
         data = re.sub(r"心血管疾患", "心血管疾病", data)
         data = re.sub(r"肺部疾患", "肺部疾病", data)
@@ -47,6 +50,7 @@ class ICDTokenizer:
         data = re.sub(r"末期腎疾患", "末期腎疾病", data)
         data = re.sub(r"排尿障礙", "排尿困難", data)
         data = re.sub(r"慢性老化性失智症", "慢性老年失智症", data)
+        data = re.sub(r"心因性猝逝", "心因性猝死", data)
 
         data = re.sub(r"慢性老化性失智症", "慢性失智症", data)
         data = re.sub(r"敗血休克", "敗血性休克", data)
@@ -62,6 +66,7 @@ class ICDTokenizer:
         data = re.sub(r"乳腺惡性腫瘤", "乳腺癌", data)
         data = re.sub(r"大出血", "出血", data)
         data = re.sub(r"本態性\(原發性\)高血壓", "本態性高血壓", data)
+        data = re.sub(r"腦中風病史", "腦中風", data)
 
         data = data.replace("COVID19", "COVID-19")
 
@@ -107,6 +112,8 @@ class ICDTokenizer:
                 data = "車禍D3機車騎士*大貨車"
             elif "貨車" in data:
                 data = "車禍A22機車*貨車"
+            elif "自撞" in data:
+                data = "'車禍D6機車騎士*撞靜態物體'"
             elif data.count("機車") == 2:
                 data = "車禍A20機車"
         elif "自行車" in data or "腳踏車" in data:
@@ -120,6 +127,68 @@ class ICDTokenizer:
                 data = "車禍C3腳踏車騎士*小貨車"
 
         return data
+
+    def _post_process(self, data: list, after_11206=False) -> list:
+        if "自然死亡" in data and len(data) > 1:
+            data.remove("自然死亡")
+
+        covid = {
+            "COVID": "COVID 19",
+            "COVID-19": "COVID 19",
+            "COVID-19病毒感染": "COVID 19",
+            "COVID-19肺炎": "COVID 19",
+            "COVID肺炎": "COVID 19",
+            "Covid19": "COVID 19",
+            "嚴重特殊性傳染性肺炎": "嚴重特殊傳染性肺炎(COVID-19)",
+            "新冠病毒感染肺炎": "嚴重特殊傳染性肺炎(COVID-19)",
+        }
+
+        kidney = {
+            "第一期慢性腎臟病": "慢性腎臟疾病",
+            "第二期慢性腎臟病": "慢性腎臟疾病",
+            "第三期慢性腎臟病": "慢性腎臟疾病",
+            "第四期慢性腎臟病": "慢性腎臟疾病",
+            "第四期慢性腎臟疾病": "慢性腎臟疾病",
+            "第五期慢性腎臟病": "慢性腎臟疾病",
+            "第五期慢性腎臟疾病": "慢性腎臟疾病",
+        }
+
+        check = {
+            "解剖鑑定中": "司法相驗中",
+            "檢體鑑定中": "司法相驗中",
+            "採證送鑑": "司法相驗中",
+            "毒藥物鑑定中": "司法相驗中",
+            "鑑驗中": "司法相驗中",
+            "暫冰存": "司法相驗中",
+            "血液鑑定中": "司法相驗中",
+            "檢驗中": "司法相驗中",
+            "待鑑定": "司法相驗中",
+            "解剖鑑定": "司法相驗中",
+            "採檢體送鑑中": "司法相驗中",
+            "待解剖鑑定": "司法相驗中",
+            "血液鑑定": "司法相驗中",
+            "死因鑑定中": "司法相驗中",
+            "鑑定中": "司法相驗中",
+            "檢體鑑驗中": "司法相驗中",
+            "採證送驗": "司法相驗中",
+            "檢體檢驗中": "司法相驗中",
+            "待查": "司法相驗中",
+            "採證送鑑中": "司法相驗中",
+            "檢體送鑑定": "司法相驗中",
+            "解剖送鑑中": "司法相驗中",
+        }
+
+        result = []
+        for d in data:
+            if d in covid:
+                result.append(covid[d])
+            elif d in kidney:
+                result.append(kidney[d])
+            elif d in check and after_11206:
+                result.append(check[d])
+            else:
+                result.append(d)
+        return result
 
     def _is_subset(self, str1: str, str2: str) -> bool:
         if str1 == str2:
@@ -150,7 +219,7 @@ class ICDTokenizer:
     def remove_duplicate(self, data: list) -> list:
         return list(dict.fromkeys(data))
 
-    def extract_icd(self, inputs: Data):
+    def extract_icd(self, inputs: Data, after_11206=False):
         # Shift inputs if there is empty input
         inputs_list = []
         for catalog in ["甲", "乙", "丙", "丁"]:
@@ -166,6 +235,8 @@ class ICDTokenizer:
             result = []
             for i in range(4):
                 result.extend(self.extract(inputs[catalog][i]))
+
+            result = self._post_process(result, after_11206)
 
             # Extend array length to 4
             while len(result) < 4:
@@ -220,12 +291,8 @@ if __name__ == "__main__":
     df["input"] = df["input"].apply(ast.literal_eval)
     df["answer"] = df["answer"].apply(ast.literal_eval)
 
-    max_state = 1
-
     tables = []
-    for i in range(5):
-        if i >= max_state:
-            break
+    for i in range(13):
         table = Table(title=f"State {i}")
         table.add_column()
         table.add_column("Input")
@@ -235,9 +302,8 @@ if __name__ == "__main__":
 
     for i, row in df.iterrows():
         state = row["state"]
-        if state >= max_state:
-            continue
         toks = tokenizer.extract(row["input"][0])
+        toks = tokenizer._post_process(toks, after_11206=True)
 
         if set(row["answer"]) == set(toks):
             status = ":white_check_mark:"
