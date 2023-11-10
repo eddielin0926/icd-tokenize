@@ -67,6 +67,9 @@ class ICDTokenizer:
         data = re.sub(r"大出血", "出血", data)
         data = re.sub(r"本態性\(原發性\)高血壓", "本態性高血壓", data)
         data = re.sub(r"腦中風病史", "腦中風", data)
+        data = re.sub(r"清潔劑", "清潔劑中毒", data)
+        data = re.sub(r"農藥", "農藥中毒", data)
+        data = re.sub(r"糖尿病\(第二型\)", "第二型糖尿病", data)
 
         data = data.replace("COVID19", "COVID-19")
 
@@ -129,7 +132,9 @@ class ICDTokenizer:
         return data
 
     def _post_process(self, data: list, after_11206=False) -> list:
-        if "自然死亡" in data and len(data) > 1:
+        if "性病" in data and len(data) > 1:
+            data.remove("性病")
+        elif "自然死亡" in data and len(data) > 1:
             data.remove("自然死亡")
 
         covid = {
