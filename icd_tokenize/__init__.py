@@ -3,13 +3,13 @@ from .icd import ICD
 from .record import Record
 from .stats import Stats
 from .synonym import Synonym
-from .tokenizer import ICDTokenizer
-from .validator import ICDValidator
+from .tokenizer import Tokenizer
+from .validator import Validator
 
 __all__ = [
     "ICD",
-    "ICDTokenizer",
-    "ICDValidator",
+    "Tokenizer",
+    "Validator",
     "Record",
     "Stats",
     "Data",

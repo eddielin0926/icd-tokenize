@@ -8,10 +8,10 @@ from rich.table import Table
 
 from icd_tokenize import ICD
 from icd_tokenize.data import Data
-from icd_tokenize.validator import ICDValidator
+from icd_tokenize.validator import Validator
 
 
-class ICDTokenizer:
+class Tokenizer:
     def __init__(self, icd: ICD = None, experimental=False) -> None:
         if icd is None:
             icd = ICD()
@@ -293,8 +293,8 @@ class ICDTokenizer:
 
 if __name__ == "__main__":
     icd = ICD()
-    tokenizer = ICDTokenizer(icd=icd, experimental=True)
-    validator = ICDValidator(icd=icd)
+    tokenizer = Tokenizer(icd=icd, experimental=True)
+    validator = Validator(icd=icd)
 
     df = pd.read_csv("states.csv", encoding="utf8")
     df["input"] = df["input"].apply(ast.literal_eval)
@@ -328,4 +328,3 @@ if __name__ == "__main__":
     console = Console()
     for table in tables:
         console.print(table)
-        break

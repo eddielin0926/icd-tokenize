@@ -12,7 +12,7 @@ from pandas.io.formats import excel
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn
 
-from icd_tokenize import ICD, ICDTokenizer, ICDValidator, Record, Stats
+from icd_tokenize import ICD, Record, Stats, Tokenizer, Validator
 
 # Disable header style in excel
 excel.ExcelFormatter.header_style = None
@@ -21,8 +21,8 @@ excel.ExcelFormatter.header_style = None
 def processing_file(
     progress,
     task_id,
-    tokenizer: ICDTokenizer,
-    validator: ICDValidator,
+    tokenizer: Tokenizer,
+    validator: Validator,
     data_dir: str,
     output_dir: str,
     file: str,
@@ -136,8 +136,8 @@ if __name__ == "__main__":
 
     # Initialize ICD Tools
     icd = ICD()
-    tokenizer = ICDTokenizer(icd, experimental=True)
-    validator = ICDValidator(icd)
+    tokenizer = Tokenizer(icd, experimental=True)
+    validator = Validator(icd)
 
     # List all files in data directory
     data_dir = "data"

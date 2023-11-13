@@ -3,7 +3,7 @@ from icd_tokenize.icd import ICD
 from icd_tokenize.status import Status
 
 
-class ICDValidator:
+class Validator:
     def __init__(self, icd: ICD = None) -> None:
         if icd is None:
             icd = ICD()
@@ -104,7 +104,7 @@ class ICDValidator:
 
 
 if __name__ == "__main__":
-    validator = ICDValidator()
+    validator = Validator()
     predict = ["高血壓心臟病", "糖尿病", "腎臟病", ""]
     target = ["高血壓", "心臟病", "糖尿病腎臟病", ""]
     print(validator.icd_validate(predict, target))

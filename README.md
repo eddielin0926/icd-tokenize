@@ -1,5 +1,7 @@
 # ICD Tokenize
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eddielin0926/icd-tokenize/blob/main/train.ipynb)
+
 Based on death description, generate International Classification of Diseases
 
 ## Prerequisites
