@@ -6,87 +6,73 @@ import os
 import numpy as np
 import pandas as pd
 import pyarrow
-from datasets import Array2D, Dataset, Features, Value
-from rich.progress import track
+from datasets import Dataset, Features, Sequence, Value
 
 pyarrow.PyExtensionType.set_auto_load(True)
 
-data_dir = "data"
-files = os.listdir(data_dir)
-files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary excel files
-files = list(filter(lambda f: "(00000)" not in f, files))
 
-catalogs = []
-text = []
-df_list = []
-for file in files:
-    year_month = file[file.find("(") + 1 : file.find(")")]
-    year = int(year_month[:3])
-    month = int(year_month[3:])
+def generate_data():
+    data_dir = "data"
+    files = os.listdir(data_dir)
+    files = filter(lambda f: f[:2] != "~$", files)  # Prevent processing temporary excel files
+    files = list(filter(lambda f: "(00000)" not in f, files))
 
-    # Load Dataset
-    df = pd.read_excel(os.path.join(data_dir, file), header=1)
-    df[["NO", "死亡方式", "創傷代號", "創傷代號.1", "創傷代號\n檢查", "流水號"]] = df[
-        ["NO", "死亡方式", "創傷代號", "創傷代號.1", "創傷代號\n檢查", "流水號"]
-    ].fillna(0)
-    df = df.replace(np.nan, "", regex=True)  # replace nan with empty string
+    for file in files:
+        year_month = file[file.find("(") + 1 : file.find(")")]
+        year = int(year_month[:3])
+        month = int(year_month[3:])
 
-    input_data = []
-    target_data = []
-    for idx, row in track(df.iterrows(), total=len(df.index), description=f"{file} "):
-        input_data.append([])
-        target_data.append([])
-        for i, catalog in enumerate(["甲", "乙", "丙", "丁", "其他"]):
-            input_data[-1].append([])
-            target_data[-1].append([])
-            for tag in ["", "2", "3", "4"]:
-                input_data[-1][-1].append(row[f"{catalog}{tag}"])
-                target_data[-1][-1].append(row[f"{catalog}{tag}.1"])
+        # Load Dataset
+        df = pd.read_excel(os.path.join(data_dir, file), header=1)
+        df[["NO", "死亡方式", "創傷代號", "創傷代號.1", "創傷代號\n檢查", "流水號"]] = df[
+            ["NO", "死亡方式", "創傷代號", "創傷代號.1", "創傷代號\n檢查", "流水號"]
+        ].fillna(0)
+        df = df.replace(np.nan, "", regex=True)  # replace nan with empty string
 
-    df["inputs"] = input_data
-    df["labels"] = target_data
+        for _, row in df.iterrows():
+            for i, catalog in enumerate(["甲", "乙", "丙", "丁", "其他"]):
+                input_data = []
+                target_data = []
 
-    df = df.drop(
-        columns=[f"{c}{i}" for c in ["甲", "乙", "丙", "丁", "其他"] for i in ["", "2", "3", "4"]]
-    )
-    df = df.drop(
-        columns=[f"{c}{i}.1" for c in ["甲", "乙", "丙", "丁", "其他"] for i in ["", "2", "3", "4"]]
-    )
+                for tag in ["", "2", "3", "4"]:
+                    input_data.append(row[f"{catalog}{tag}"])
+                    target_data.append(row[f"{catalog}{tag}.1"])
 
-    df.insert(0, "year", year + 1911)
-    df.insert(1, "month", month)
+                input_data = list(filter(lambda x: x != "", input_data))
+                target_data = list(filter(lambda x: x != "", target_data))
 
-    df.rename(
-        columns={
-            "NO": "no",
-            "死亡方式": "death",
-            "創傷代號": "input_code",
-            "創傷代號.1": "result_code",
-            "創傷代號\n檢查": "check",
-            "流水號": "serial_no",
-        },
-        inplace=True,
-    )
+                yield {
+                    "year": year + 1911,
+                    "month": month,
+                    "no": row["NO"],
+                    "death": row["死亡方式"],
+                    "input_code": row["創傷代號"],
+                    "result_code": row["創傷代號.1"],
+                    "check": row["創傷代號\n檢查"],
+                    "serial_no": row["流水號"],
+                    "catalog": i,
+                    "inputs": input_data,
+                    "labels": target_data,
+                }
 
-    # df.to_csv(f"dataset/{year + 1911}-{str(month).zfill(2)}.csv", index=False)
-    df_list.append(df)
-
-df = pd.concat(df_list, ignore_index=True)
 
 features = Features(
     {
         "year": Value("int32"),
         "month": Value("int32"),
         "no": Value("int32"),
-        "inputs": Array2D(shape=(5, 4), dtype="string"),
-        "labels": Array2D(shape=(5, 4), dtype="string"),
         "death": Value("int32"),
         "input_code": Value("int32"),
         "result_code": Value("int32"),
         "check": Value("bool"),
         "serial_no": Value("int32"),
+        "catalog": Value("int32"),
+        "inputs": Sequence(Value("string")),
+        "labels": Sequence(Value("string")),
     }
 )
 
-dataset = Dataset.from_pandas(df, features=features)
+dataset = Dataset.from_generator(generate_data, features=features)
+print(dataset[0])
+print(dataset.features)
 dataset.push_to_hub("eddielin0926/chinese-icd")
