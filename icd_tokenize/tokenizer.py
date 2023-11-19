@@ -233,7 +233,30 @@ class Tokenizer:
         inputs_list = []
         for catalog in ["甲", "乙", "丙", "丁"]:
             if any(i != "" for i in inputs[catalog]):
-                inputs_list.append(inputs[catalog])
+                current = []
+                next = []
+                for i in inputs[catalog]:
+                    if "導致" in i:
+                        i_split = i.split("導致", 1)
+                        current.append(i_split[1])
+                        if len(i_split) > 0:
+                            next.append(i_split[0])
+                    elif "引發" in i:
+                        i_split = i.split("引發", 1)
+                        current.append(i_split[1])
+                        if len(i_split) > 0:
+                            next.append(i_split[0])
+                    else:
+                        current.append(i)
+
+                while len(current) < 4:
+                    current.append("")
+                inputs_list.append(current)
+
+                if len(next) > 0:
+                    while len(next) < 4:
+                        next.append("")
+                    inputs_list.append(next)
         while len(inputs_list) < 4:
             inputs_list.append(["", "", "", ""])
         for i, catalog in enumerate(["甲", "乙", "丙", "丁"]):
