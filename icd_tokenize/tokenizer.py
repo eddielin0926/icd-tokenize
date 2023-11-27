@@ -233,30 +233,33 @@ class Tokenizer:
         inputs_list = []
         for catalog in ["甲", "乙", "丙", "丁"]:
             if any(i != "" for i in inputs[catalog]):
-                current = []
-                next = []
-                for i in inputs[catalog]:
-                    if "導致" in i:
-                        i_split = i.split("導致", 1)
-                        current.append(i_split[1])
-                        if len(i_split) > 0:
-                            next.append(i_split[0])
-                    elif "引發" in i:
-                        i_split = i.split("引發", 1)
-                        current.append(i_split[1])
-                        if len(i_split) > 0:
-                            next.append(i_split[0])
-                    else:
-                        current.append(i)
+                if not self.experimental:
+                    inputs_list.append(inputs[catalog])
+                else:
+                    current = []
+                    next = []
+                    for i in inputs[catalog]:
+                        if "導致" in i:
+                            i_split = i.split("導致", 1)
+                            current.append(i_split[1])
+                            if len(i_split) > 0:
+                                next.append(i_split[0])
+                        elif "引發" in i:
+                            i_split = i.split("引發", 1)
+                            current.append(i_split[1])
+                            if len(i_split) > 0:
+                                next.append(i_split[0])
+                        else:
+                            current.append(i)
 
-                while len(current) < 4:
-                    current.append("")
-                inputs_list.append(current)
+                    while len(current) < 4:
+                        current.append("")
+                    inputs_list.append(current)
 
-                if len(next) > 0:
-                    while len(next) < 4:
-                        next.append("")
-                    inputs_list.append(next)
+                    if len(next) > 0:
+                        while len(next) < 4:
+                            next.append("")
+                        inputs_list.append(next)
         while len(inputs_list) < 4:
             inputs_list.append(["", "", "", ""])
         for i, catalog in enumerate(["甲", "乙", "丙", "丁"]):
@@ -291,17 +294,16 @@ class Tokenizer:
         while input_str != "":
             prefix = self.trie.longest_prefix(input_str).key
             if prefix is None:
-                if self.experimental:
-                    if self.trie.has_subtrie(input_str[0]):
-                        possibles = [input_str[0]]
-                        for ch in input_str[1:]:
-                            currents = []
-                            for poss in possibles:
-                                if self.trie.has_node(poss + ch) != 0:
-                                    currents.append(poss + ch)
-                            possibles.extend(currents)
-                        possibles = [e for e in possibles if self.trie.has_key(e)]
-                        result.extend(possibles)
+                if self.trie.has_subtrie(input_str[0]):
+                    possibles = [input_str[0]]
+                    for ch in input_str[1:]:
+                        currents = []
+                        for poss in possibles:
+                            if self.trie.has_node(poss + ch) != 0:
+                                currents.append(poss + ch)
+                        possibles.extend(currents)
+                    possibles = [e for e in possibles if self.trie.has_key(e)]
+                    result.extend(possibles)
                 input_str = input_str[1:]
             else:
                 input_str = input_str.removeprefix(prefix)
@@ -319,7 +321,7 @@ if __name__ == "__main__":
     tokenizer = Tokenizer(icd=icd, experimental=True)
     validator = Validator(icd=icd)
 
-    df = pd.read_csv("states.csv", encoding="utf8")
+    df = pd.read_csv("icd_tokenize/data/states.csv", encoding="utf8")
     df["input"] = df["input"].apply(ast.literal_eval)
     df["answer"] = df["answer"].apply(ast.literal_eval)
 

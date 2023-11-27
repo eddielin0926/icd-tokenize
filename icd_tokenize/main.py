@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     # Initialize ICD Tools
     icd = ICD()
-    tokenizer = Tokenizer(icd, experimental=True)
+    tokenizer = Tokenizer(icd, experimental=False)
     validator = Validator(icd)
 
     # List all files in data directory

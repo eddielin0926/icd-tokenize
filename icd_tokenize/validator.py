@@ -105,6 +105,6 @@ class Validator:
 
 if __name__ == "__main__":
     validator = Validator()
-    predict = ["高血壓心臟病", "糖尿病", "腎臟病", ""]
-    target = ["高血壓", "心臟病", "糖尿病腎臟病", ""]
-    print(validator.icd_validate(predict, target))
+    predict = ["肝內膽管之續發性惡性腫瘤", "", "", ""]
+    target = ["肝續發性惡性腫瘤", "肝內膽管續發性惡性腫瘤", "", ""]
+    print(validator.validate(predict, target))
