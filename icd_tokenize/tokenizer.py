@@ -70,6 +70,19 @@ class Tokenizer:
         data = re.sub(r"清潔劑", "清潔劑中毒", data)
         data = re.sub(r"農藥", "農藥中毒", data)
         data = re.sub(r"糖尿病\(第二型\)", "第二型糖尿病", data)
+        data = re.sub(r"口腔部位囊腫", "口腔腫瘤", data)
+        data = re.sub(r"泌尿系統用藥", "泌尿系統疾患", data)
+        data = re.sub(r"待解剖", "司法相驗中", data)
+        data = re.sub(r"嚴重傳染性肺炎", "嚴重特殊傳染性肺炎", data)
+        data = re.sub(r"新冠狀病毒感染", "新冠病毒感染", data)
+        data = re.sub(r"嚴重特殊傳染肺炎", "嚴重特殊傳染性肺炎", data)
+        data = re.sub(r"新冠確診", "新冠肺炎", data)
+        data = re.sub(r"腎衰竭末期", "末期腎衰竭", data)
+        data = re.sub(r"腎臟病末期", "末期腎臟病", data)
+        data = re.sub(r"非何杰金氏惡性淋巴癌", "非何杰金氏惡性淋巴瘤", data)
+        data = re.sub(r"器官未發育", "器官發育不良", data)
+        data = re.sub(r"貳拾壹", "21", data)
+        data = re.sub(r"貳拾", "20", data)
 
         data = data.replace("COVID19", "COVID-19")
 
@@ -77,6 +90,22 @@ class Tokenizer:
             data = "燒炭"
         if data == "洗腎":
             data = "腎衰竭"
+        if "懷孕" in data:
+            possible = ""
+            d = re.compile(r"(\d+(?:\.\d+)?)\s*(週)")
+            w = re.compile(r"(\d+(?:\.\d+)?)\s*(公克)")
+            d_match = d.search(data)
+            w_match = w.search(data)
+            if d_match:
+                duration = int(d_match.group(1))
+                if duration < 28:
+                    possible += "早產兒少於28週"
+            if w_match:
+                weight = int(w_match.group(1))
+                if weight < 999:
+                    possible += "早產兒<999克"
+            if possible != "":
+                data = possible
 
         if "行人" in data:
             if "機車" in data:
@@ -132,10 +161,13 @@ class Tokenizer:
         return data
 
     def _post_process(self, data: list, after_11206=False) -> list:
-        if "性病" in data and len(data) > 1:
-            data.remove("性病")
-        elif "自然死亡" in data and len(data) > 1:
-            data.remove("自然死亡")
+        if len(data) > 1:
+            if "性病" in data:
+                data.remove("性病")
+            elif "自然死亡" in data:
+                data.remove("自然死亡")
+            elif "到院死亡" in data:
+                data.remove("到院死亡")
 
         covid = {
             "COVID-19": "COVID 19",
